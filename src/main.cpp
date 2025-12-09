@@ -10,9 +10,7 @@ int main(int argc,char* argv[])
     std::setlocale(LC_ALL,"Russian");
 
     QApplication app(argc,argv);
-
     ISD_QT2 w;
     w.showMaximized();
-
     return app.exec();
 }

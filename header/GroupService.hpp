@@ -13,7 +13,6 @@ public:
         if (g.name_.empty()) throw ISDException("Пустое имя группы");
         if (g.specialtyName_.empty()) throw ISDException("Пустое имя специальности");
     }
-
     static void setSpecialty(Group& g,std::string s) {
         if (s.empty()) throw ISDException("Пустое имя специальности");
         g.specialtyName_ = std::move(s);
