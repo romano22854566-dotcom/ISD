@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui version="4.0">
+	<class>EditStudentDialog</class>
+	<widget class="QDialog" name="EditStudentDialog">
+		<property name="geometry">
+			<rect>
+				<x>0</x>
+				<y>0</y>
+				<width>400</width>
+				<height>220</height>
+			</rect>
+		</property>
+		<property name="windowTitle">
+			<string>Редактировать студента</string>
+		</property>
+		<layout class="QVBoxLayout" name="verticalLayout">
+			<!-- Поле ФИО -->
+			<item>
+				<widget class="QLineEdit" name="editName">
+					<property name="placeholderText">
+						<string>ФИО</string>
+					</property>
+				</widget>
+			</item>
+			<!-- Поле возраста -->
+			<item>
+				<widget class="QSpinBox" name="spinAge">
+					<property name="minimum">
+						<number>14</number>
+					</property>
+					<property name="maximum">
+						<number>120</number>
+					</property>
+					<property name="value">
+						<number>18</number>
+					</property>
+				</widget>
+			</item>
+			<!-- Поле группы -->
+			<item>
+				<widget class="QLineEdit" name="editGroup">
+					<property name="placeholderText">
+						<string>Группа</string>
+					</property>
+				</widget>
+			</item>
+			<!-- Кнопка сохранить -->
+			<item>
+				<layout class="QHBoxLayout" name="horizontalLayout">
+					<item>
+						<spacer name="horizontalSpacer">
+							<property name="orientation">
+								<enum>Qt::Horizontal</enum>
+							</property>
+						</spacer>
+					</item>
+					<item>
+						<widget class="QPushButton" name="btnSave">
+							<property name="text">
+								<string>Сохранить</string>
+							</property>
+						</widget>
+					</item>
+				</layout>
+			</item>
+		</layout>
+	</widget>
+	<resources/>
+	<connections/>
+</ui>

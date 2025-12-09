@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui version="4.0">
+	<class>GroupDialog</class>
+	<widget class="QDialog" name="GroupDialog">
+		<property name="geometry">
+			<rect>
+				<x>0</x>
+				<y>0</y>
+				<width>500</width>
+				<height>350</height>
+			</rect>
+		</property>
+		<property name="windowTitle">
+			<string>Редактор группы / специальностей</string>
+		</property>
+		<layout class="QVBoxLayout" name="verticalLayout">
+			<item>
+				<!-- Таблица без явных колонок, они задаются в коде -->
+				<widget class="QTableWidget" name="tblSubjects"/>
+			</item>
+			<item>
+				<layout class="QHBoxLayout" name="horizontalLayout">
+					<item>
+						<widget class="QPushButton" name="btnAddSubject">
+							<property name="text">
+								<string>Добавить</string>
+							</property>
+						</widget>
+					</item>
+					<item>
+						<widget class="QPushButton" name="btnRemoveSubject">
+							<property name="text">
+								<string>Удалить</string>
+							</property>
+						</widget>
+					</item>
+					<item>
+						<widget class="QPushButton" name="btnAddSpecSubject">
+							<property name="text">
+								<string>Добавить предмет в специальность</string>
+							</property>
+						</widget>
+					</item>
+				</layout>
+			</item>
+		</layout>
+	</widget>
+	<resources/>
+	<connections/>
+</ui>

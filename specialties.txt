@@ -1,0 +1,5 @@
+КИ;СМИФ|Z|LK,PZ,LR;ПнаЯВУ|Z|LK,PZ,LR
+ПИ;МА|E|LK,PZ,LR
+ИИТП;МА|Z|LK,PZ,LR
+ФИБ
+ФИЗ;ФЫВА|E|LK,PZ,LR
