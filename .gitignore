@@ -109,3 +109,10 @@ $RECYCLE.BIN/
 # Database file
 employees.txt
 employees.dat
+# Игнорировать тестовый файл Visual Basic
+Class1.vb
+# Игнорировать файлы, связанные с учебной системой
+groups.txt
+specialties.txt
+students.txt
+teachers.txt
