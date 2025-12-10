@@ -24,9 +24,7 @@ public:
 
     static void removeSubject(Teacher& t,const std::string& group,const std::string& subjName) {
         auto& vec = t.groupSubjects_[group];
-        vec.erase(std::remove_if(vec.begin(),vec.end(),
-            [&](const Subject& s){ return s.name == subjName; }),
-            vec.end());
+        std::erase_if(vec,[&](const Subject& s){ return s.name == subjName; });
     }
 };
 

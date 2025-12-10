@@ -12,8 +12,8 @@ public:
     static int age(const Student& s) { return s.age_; }
     static const std::string& group(const Student& s) { return s.groupName_; }
 
-    static const std::map<std::string,SubjectRecord>& records(const Student& s) { return s.records_; }
-    static std::map<std::string,SubjectRecord>& records(Student& s) { return s.records_; }
+    static const std::map<std::string,SubjectRecord,std::less<>>& records(const Student& s) { return s.records_; }
+    static std::map<std::string,SubjectRecord,std::less<>>& records(Student& s) { return s.records_; }
 
     static void validate(const Student& s) {
         if (s.name_.empty()) throw ISDException("Пустое имя студента");
@@ -26,7 +26,7 @@ public:
             auto& rec = st.records_[s.name];
             for (auto ct : s.classTypes){
                 (void)rec.grades[ct];
-                if (rec.absences.find(ct) == rec.absences.end())
+                if (!rec.absences.contains(ct))
                     rec.absences[ct] = 0;
             }
         }

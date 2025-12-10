@@ -8,14 +8,14 @@ class GroupDialog: public QDialog {
     Q_OBJECT
 public:
     GroupDialog(isd::Registry& reg,int groupId,QWidget* parent = nullptr);
-    ~GroupDialog();   
+    ~GroupDialog() override;
 
 private slots:
-    void onAddSubject();        
-    void onRemoveSubject();    
-    void onAddSpecialty();      
-    void onAddSpecSubject();    
-    void onRemoveSpecItem();    
+    void onAddSubject();
+    void onRemoveSubject();
+    void onAddSpecialty();
+    void onAddSpecSubject();
+    void onRemoveSpecItem();
 
 private:
     Ui::GroupDialog* ui;

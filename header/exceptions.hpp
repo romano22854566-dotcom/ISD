@@ -5,7 +5,7 @@
 namespace isd{
 
 struct ISDException: std::runtime_error {
-    explicit ISDException(const std::string& m): std::runtime_error(m) {}
+    using std::runtime_error::runtime_error;
 };
 
-} 
+}

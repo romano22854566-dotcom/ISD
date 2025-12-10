@@ -26,10 +26,13 @@ QString StudentDialog::joinGrades(const std::vector<int>& v){
 }
 
 void StudentDialog::loadData() {
-    auto s = reg.getStudent(studentId);
-    auto g = reg.findGroup(StudentService::group(*s));
+    const Student* s = reg.getStudent(studentId);
+    if (!s) return;
+
+    const Group* g = reg.findGroup(StudentService::group(*s));
     if (!g) return;
-    const auto* sp = reg.findSpecialty(GroupService::specialty(*g));
+
+    const Specialty* sp = reg.findSpecialty(GroupService::specialty(*g));
     if (!sp) return;
 
     ui->tblSubjects->setRowCount(0);
@@ -40,28 +43,36 @@ void StudentDialog::loadData() {
         "Средний балл","Всего пропусков"
     });
 
+    const auto& recs = StudentService::records(*s);
     int row = 0;
-    for (auto& specSubj : sp->subjects_) {
+
+    auto fillRow = [&](int r,const SubjectRecord& rec) {
+        ui->tblSubjects->setItem(r,1,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::LK).vals_)));
+        ui->tblSubjects->setItem(r,2,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::PZ).vals_)));
+        ui->tblSubjects->setItem(r,3,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::LR).vals_)));
+        ui->tblSubjects->setItem(r,4,new QTableWidgetItem(QString::number(SubjectRecordService::absenceAt(rec,ClassType::LK))));
+        ui->tblSubjects->setItem(r,5,new QTableWidgetItem(QString::number(SubjectRecordService::absenceAt(rec,ClassType::PZ))));
+        ui->tblSubjects->setItem(r,6,new QTableWidgetItem(QString::number(SubjectRecordService::absenceAt(rec,ClassType::LR))));
+
+        double sum = 0.0; int cnt = 0; int abs = 0;
+
+        for (const auto& [_,gr] : rec.grades) {
+            for (int v : gr.vals_) { sum += v; ++cnt; }
+        }
+        for (const auto& [_,a] : rec.absences) { abs += a; }
+
+        const double finalAvg = (cnt > 0) ? (sum / cnt) : 0.0;
+        ui->tblSubjects->setItem(r,7,new QTableWidgetItem(QString::number(finalAvg,'f',2)));
+        ui->tblSubjects->setItem(r,8,new QTableWidgetItem(QString::number(abs)));
+    };
+
+    for (const auto& specSubj : sp->subjects_) {
         ui->tblSubjects->insertRow(row);
         ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(specSubj.name)));
 
-        const auto& recs = StudentService::records(*s);
-        auto it = recs.find(specSubj.name);
-        double avg = 0.0; int count = 0; int totalAbs = 0;
-
-        if (it != recs.end()){
-            const auto& rec = it->second;
-            ui->tblSubjects->setItem(row,1,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::LK).vals_)));
-            ui->tblSubjects->setItem(row,2,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::PZ).vals_)));
-            ui->tblSubjects->setItem(row,3,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::LR).vals_)));
-            ui->tblSubjects->setItem(row,4,new QTableWidgetItem(QString::number(SubjectRecordService::absenceAt(rec,ClassType::LK))));
-            ui->tblSubjects->setItem(row,5,new QTableWidgetItem(QString::number(SubjectRecordService::absenceAt(rec,ClassType::PZ))));
-            ui->tblSubjects->setItem(row,6,new QTableWidgetItem(QString::number(SubjectRecordService::absenceAt(rec,ClassType::LR))));
-
-            for (auto& gkv : rec.grades){
-                for (int v : gkv.second.vals_){ avg += v; ++count; }
-            }
-            for (auto& akv : rec.absences){ totalAbs += akv.second; }
+        if (auto it = recs.find(specSubj.name); it != recs.end()) {
+            const SubjectRecord& rec = it->second;
+            fillRow(row,rec);
         }
         else {
             ui->tblSubjects->setItem(row,1,new QTableWidgetItem(""));
@@ -70,25 +81,26 @@ void StudentDialog::loadData() {
             ui->tblSubjects->setItem(row,4,new QTableWidgetItem("0"));
             ui->tblSubjects->setItem(row,5,new QTableWidgetItem("0"));
             ui->tblSubjects->setItem(row,6,new QTableWidgetItem("0"));
+            ui->tblSubjects->setItem(row,7,new QTableWidgetItem(QString::number(0.0,'f',2)));
+            ui->tblSubjects->setItem(row,8,new QTableWidgetItem("0"));
         }
-        double finalAvg = (count > 0) ? (avg / count) : 0.0;
-        ui->tblSubjects->setItem(row,7,new QTableWidgetItem(QString::number(finalAvg,'f',2)));
-        ui->tblSubjects->setItem(row,8,new QTableWidgetItem(QString::number(totalAbs)));
         ++row;
     }
 }
 
 void StudentDialog::onSave() {
-    auto s = reg.getStudentMutable(studentId);
+    Student* s = reg.getStudentMutable(studentId);
+    if (!s) { accept(); return; }
+
     for (int row = 0; row < ui->tblSubjects->rowCount(); ++row) {
-        QString subj = ui->tblSubjects->item(row,0)->text();
+        const QString subj = ui->tblSubjects->item(row,0)->text();
 
         auto parseGrades = [&](int col,ClassType ct){
             auto* item = ui->tblSubjects->item(row,col);
-            QStringList parts = item ? item->text().split(" ",Qt::SkipEmptyParts) : QStringList{};
+            const QStringList parts = item ? item->text().split(" ",Qt::SkipEmptyParts) : QStringList{};
             StudentService::clearGrades(*s,subj.toStdString(),ct);
-            for (auto& p : parts) {
-                bool ok = false; int val = p.toInt(&ok);
+            for (const auto& p : parts) {
+                bool ok = false; const int val = p.toInt(&ok);
                 if (ok) StudentService::addGrade(*s,subj.toStdString(),ct,val);
             }
         };
@@ -98,7 +110,7 @@ void StudentDialog::onSave() {
 
         auto parseAbs = [&](int col,ClassType ct){
             auto* item = ui->tblSubjects->item(row,col);
-            int val = item ? item->text().toInt() : 0;
+            const int val = item ? item->text().toInt() : 0;
             StudentService::setAbsence(*s,subj.toStdString(),ct,val);
         };
         parseAbs(4,ClassType::LK);

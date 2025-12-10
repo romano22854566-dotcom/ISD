@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <string>
 #include <map>
+#include <functional>
 #include "grade.hpp"
 #include "specialty.hpp"
 
@@ -19,7 +20,7 @@ public:
     std::string name_;
     int age_{0};
     std::string groupName_;
-    std::map<std::string,SubjectRecord> records_;
+    std::map<std::string,SubjectRecord,std::less<>> records_;
 
     Student() = default;
     Student(std::string n,int a,std::string g)

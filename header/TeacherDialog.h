@@ -8,7 +8,7 @@ class TeacherDialog: public QDialog {
     Q_OBJECT
 public:
     TeacherDialog(isd::Registry& reg,int teacherId,QWidget* parent = nullptr);
-    ~TeacherDialog();
+    ~TeacherDialog() override;
 
 private slots:
     void onAddSubject();

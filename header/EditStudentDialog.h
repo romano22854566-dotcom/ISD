@@ -8,7 +8,7 @@ class EditStudentDialog: public QDialog {
     Q_OBJECT
 public:
     EditStudentDialog(isd::Registry& reg,isd::Id studentId,QWidget* parent = nullptr);
-    ~EditStudentDialog();
+    ~EditStudentDialog() override;
 
 private slots:
     void onSave();
@@ -19,4 +19,3 @@ private:
     isd::Id studentId;
     void loadData();
 };
-#pragma once

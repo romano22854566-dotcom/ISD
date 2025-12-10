@@ -13,7 +13,7 @@
 #include <clocale>
 
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
 #endif
 #include "student.hpp"
 #include "StudentDialog.h"
@@ -43,9 +43,9 @@ void setSectionModes(QTableWidget* tbl,const std::vector<QHeaderView::ResizeMode
     }
 }
 
-QPushButton* makeDeleteButton(const QString& text,QObject* receiver,std::function<void()> onClick) {
+QPushButton* makeDeleteButton(const QString& text,const QObject* receiver,std::function<void()> onClick) {
     auto* btn = new QPushButton(text);
-    QObject::connect(btn,&QPushButton::clicked,receiver,std::move(onClick));
+    QObject::connect(btn,&QPushButton::clicked,const_cast<QObject*>(receiver),std::move(onClick));
     return btn;
 }
 
@@ -62,7 +62,6 @@ void filterByText(QTableWidget* tbl,int col,const QString& query) {
 ISD_QT2::ISD_QT2(QWidget* parent)
     : QMainWindow(parent)
     ,ui(new Ui::ISD_QT2)
-    ,reg("students.txt","teachers.txt","groups.txt","specialties.txt")
 {
     ui->setupUi(this);
     showMaximized();
@@ -115,7 +114,7 @@ ISD_QT2::ISD_QT2(QWidget* parent)
     std::setlocale(LC_ALL,"Russian");
 
     try { reg.load(); }
-    catch (...) { QMessageBox::warning(this,"Ошибка","Не удалось загрузить данные, начаты новые файлы."); }
+    catch (const ISDException&){ QMessageBox::warning(this,"Ошибка","Не удалось загрузить данные, начаты новые файлы."); }
 
     // Студенты
     connect(ui->tblStudents,&QTableWidget::cellDoubleClicked,this,&ISD_QT2::onStudentDoubleClicked);
@@ -174,12 +173,11 @@ void ISD_QT2::exportStudentReport(int sid) {
     if (!s) return;
 
     QString specialty = "Не указана";
-    Group* g = reg.findGroup(s->groupName_);
-    if (g && !g->specialtyName_.empty()) {
+    if (const Group* g = reg.findGroup(s->groupName_); g && !g->specialtyName_.empty()) {
         specialty = QString::fromStdString(g->specialtyName_);
     }
 
-    QString fileName = QFileDialog::getSaveFileName(this,"Сохранить справку",".","Text Files (*.txt)");
+    const QString fileName = QFileDialog::getSaveFileName(this,"Сохранить справку",".","Text Files (*.txt)");
     if (fileName.isEmpty()) return;
 
     QFile f(fileName);
@@ -202,26 +200,21 @@ void ISD_QT2::exportStudentReport(int sid) {
 
     int index = 1; double totalAvg = 0.0; int subjCount = 0; int totalAbs = 0;
 
-    const std::map<std::string,SubjectRecord>& recs = s->records_;
-    for (std::map<std::string,SubjectRecord>::const_iterator it = recs.begin(); it != recs.end(); ++it) {
-        const std::string& subj = it->first;
-        const SubjectRecord& rec = it->second;
-
+    const auto& recs = s->records_;
+    for (const auto& [subj,rec] : recs) {
         double sum = 0.0; int cnt = 0; int abs = 0;
 
-        for (std::map<ClassType,Grade<int>>::const_iterator git = rec.grades.begin(); git != rec.grades.end(); ++git) {
-            const Grade<int>& gr = git->second;
+        for (const auto& [_,gr] : rec.grades) {
             for (size_t i = 0; i < gr.vals_.size(); ++i) {
                 sum += gr.vals_[i];
                 ++cnt;
             }
         }
-
-        for (std::map<ClassType,int>::const_iterator ait = rec.absences.begin(); ait != rec.absences.end(); ++ait) {
-            abs += ait->second;
+        for (const auto& [_,a] : rec.absences) {
+            abs += a;
         }
 
-        double avg = (cnt > 0) ? (sum / cnt) : 0.0;
+        const double avg = (cnt > 0) ? (sum / cnt) : 0.0;
 
         out << QString("| %1 | %2 | %3 | %4 |\n")
             .arg(index,2)
@@ -237,11 +230,11 @@ void ISD_QT2::exportStudentReport(int sid) {
 
     out << "+----+-------------------------+--------------+------------------+\n\n";
 
-    double finalAvg = (subjCount > 0) ? (totalAvg / subjCount) : 0.0;
+    const double finalAvg = (subjCount > 0) ? (totalAvg / subjCount) : 0.0;
     out << "Общее количество пропусков: " << totalAbs << "\n";
     out << "Средний балл по всем предметам: " << QString::number(finalAvg,'f',2) << "\n\n";
 
-    QDate today = QDate::currentDate();
+    const QDate today = QDate::currentDate();
     out << "Дата выдачи: " << today.toString("dd.MM.yyyy") << "\n\n";
     out << "Декан: _____________________________\n";
 }
@@ -268,7 +261,7 @@ void ISD_QT2::refreshStudents()
     ui->tblStudents->setColumnWidth(4,100);
     ui->tblStudents->setColumnWidth(5,100);
 
-    std::vector<Id> ids = reg.allStudentIds();
+    auto ids = reg.allStudentIds();
     ui->tblStudents->setRowCount((int)ids.size());
 
     for (int row = 0; row < (int)ids.size(); ++row) {
@@ -279,7 +272,7 @@ void ISD_QT2::refreshStudents()
         ui->tblStudents->setItem(row,2,new QTableWidgetItem(QString::fromStdString(s->groupName_)));
 
         // Редактирование
-        QPushButton* btnEdit = new QPushButton("Редакт.");
+        auto* btnEdit = new QPushButton("Редакт.");
         connect(btnEdit,&QPushButton::clicked,this,[this,row]{
             const int sid = studentRowToId(row);
             if (!sid) return;
@@ -290,7 +283,7 @@ void ISD_QT2::refreshStudents()
         ui->tblStudents->setCellWidget(row,3,btnEdit);
 
         // Справка
-        QPushButton* btnRep = new QPushButton("Справка");
+        auto* btnRep = new QPushButton("Справка");
         connect(btnRep,&QPushButton::clicked,this,[this,row]{
             const int sid = studentRowToId(row);
             if (!sid) return;
@@ -299,7 +292,7 @@ void ISD_QT2::refreshStudents()
         ui->tblStudents->setCellWidget(row,4,btnRep);
 
         // Удаление
-        QPushButton* btnDel = makeDeleteButton("Удалить",this,[this,row]{
+        auto* btnDel = makeDeleteButton("Удалить",this,[this,row]{
             const int sid = studentRowToId(row);
             if (sid) { reg.removeStudent((Id)sid); refreshStudents(); }
         });
@@ -313,15 +306,15 @@ void ISD_QT2::onAddStudent()
     if (name.trimmed().isEmpty()) return;
     const int age = QInputDialog::getInt(this,"Возраст","Возраст:",DEFAULT_STUDENT_AGE,MIN_STUDENT_AGE,MAX_STUDENT_AGE);
 
-    std::vector<Id> gids = reg.allGroupIds();
+    auto gids = reg.allGroupIds();
     if (gids.empty()) {
         QMessageBox::warning(this,"Нет групп","Сначала добавьте группу.");
         return;
     }
 
     QStringList groupNames;
-    for (size_t i = 0; i < gids.size(); ++i) {
-        const Group* g = reg.getGroup(gids[i]);
+    for (auto gid : gids) {
+        const Group* g = reg.getGroup(gid);
         groupNames << QString::fromStdString(g->name_);
     }
 
@@ -331,8 +324,7 @@ void ISD_QT2::onAddStudent()
 
     try {
         Student s(name.toStdString(),age,gname.toStdString());
-        Group* g = reg.findGroup(gname.toStdString());
-        if (g && !g->specialtyName_.empty()) {
+        if (const Group* g = reg.findGroup(gname.toStdString()); g && !g->specialtyName_.empty()) {
             const Specialty* sp = reg.findSpecialty(g->specialtyName_);
             if (sp) StudentService::ensureSubjectsFromSpecialty(s,*sp);
         }
@@ -361,6 +353,7 @@ void ISD_QT2::onImportCSV()
     }
     QTextStream in(&f);
     int imported = 0;
+    int failed = 0;
     while (!in.atEnd()){
         const QString line = in.readLine();
         const QStringList parts = line.split(",",Qt::KeepEmptyParts);
@@ -371,17 +364,18 @@ void ISD_QT2::onImportCSV()
         if (name.isEmpty() || group.isEmpty()) continue;
         try {
             Student s(name.toStdString(),age,group.toStdString());
-            Group* gr = reg.findGroup(group.toStdString());
-            if (gr && !gr->specialtyName_.empty()){
+            if (const Group* gr = reg.findGroup(group.toStdString()); gr && !gr->specialtyName_.empty()){
                 const Specialty* sp = reg.findSpecialty(gr->specialtyName_);
                 if (sp) StudentService::ensureSubjectsFromSpecialty(s,*sp);
             }
             reg.addStudent(s);
             ++imported;
         }
-        catch (...) {}
+        catch (const ISDException&) {
+            ++failed;
+        }
     }
-    QMessageBox::information(this,"Импорт завершён",QString("Импортировано записей: %1").arg(imported));
+    QMessageBox::information(this,"Импорт завершён",QString("Импортировано записей: %1. Ошибок: %2").arg(imported).arg(failed));
     refreshStudents();
 }
 
@@ -404,7 +398,7 @@ void ISD_QT2::refreshGroups()
     });
     ui->tblGroups->setColumnWidth(2,100);
 
-    std::vector<Id> ids = reg.allGroupIds();
+    auto ids = reg.allGroupIds();
     ui->tblGroups->setRowCount((int)ids.size());
 
     for (int row = 0; row < (int)ids.size(); ++row) {
@@ -413,7 +407,7 @@ void ISD_QT2::refreshGroups()
         ui->tblGroups->setItem(row,0,new QTableWidgetItem(QString::fromStdString(g->name_)));
         ui->tblGroups->setItem(row,1,new QTableWidgetItem(QString::fromStdString(g->specialtyName_)));
 
-        QPushButton* btn = makeDeleteButton("Удалить",this,[this,row]{
+        auto* btn = makeDeleteButton("Удалить",this,[this,row]{
             const int gid = groupRowToId(row);
             if (gid) {
                 reg.removeGroup((Id)gid);
@@ -430,14 +424,14 @@ void ISD_QT2::onAddGroup()
     const QString name = QInputDialog::getText(this,"Добавить группу","Номер группы:");
     if (name.trimmed().isEmpty()) return;
 
-    std::vector<Id> sids = reg.allSpecialtyIds();
+    auto sids = reg.allSpecialtyIds();
     if (sids.empty()){
         QMessageBox::warning(this,"Нет специальностей","Сначала добавьте специальность.");
         return;
     }
     QStringList specNames;
-    for (size_t i = 0; i < sids.size(); ++i) {
-        const Specialty* sp = reg.getSpecialty(sids[i]);
+    for (auto sid : sids) {
+        const Specialty* sp = reg.getSpecialty(sid);
         specNames << QString::fromStdString(sp->name_);
     }
 
@@ -482,7 +476,7 @@ void ISD_QT2::refreshTeachers()
     });
     ui->tblTeachers->setColumnWidth(2,100);
 
-    std::vector<Id> ids = reg.allTeacherIds();
+    auto ids = reg.allTeacherIds();
     ui->tblTeachers->setRowCount((int)ids.size());
 
     for (int row = 0; row < (int)ids.size(); ++row) {
@@ -491,7 +485,7 @@ void ISD_QT2::refreshTeachers()
         ui->tblTeachers->setItem(row,0,new QTableWidgetItem(QString::fromStdString(t->fullName())));
         ui->tblTeachers->setItem(row,1,new QTableWidgetItem(QString::number(t->age())));
 
-        QPushButton* btn = makeDeleteButton("Удалить",this,[this,row]{
+        auto* btn = makeDeleteButton("Удалить",this,[this,row]{
             const int tid = teacherRowToId(row);
             if (tid) { reg.removeTeacher((Id)tid); refreshTeachers(); }
         });
@@ -538,7 +532,7 @@ void ISD_QT2::refreshSpecialties()
     });
     ui->tblSpecialties->setColumnWidth(1,100);
 
-    std::vector<Id> ids = reg.allSpecialtyIds();
+    auto ids = reg.allSpecialtyIds();
     ui->tblSpecialties->setRowCount((int)ids.size());
 
     for (int row = 0; row < (int)ids.size(); ++row) {
@@ -546,7 +540,7 @@ void ISD_QT2::refreshSpecialties()
         const Specialty* sp = reg.getSpecialty(id);
         ui->tblSpecialties->setItem(row,0,new QTableWidgetItem(QString::fromStdString(sp->name_)));
 
-        QPushButton* btn = makeDeleteButton("Удалить",this,[this,id]{
+        auto* btn = makeDeleteButton("Удалить",this,[this,id]{
             reg.removeSpecialty(id);
             refreshAllAfterSpecChange();
         });
@@ -580,23 +574,20 @@ void ISD_QT2::refreshSubjects()
     ui->tblSubjects->setColumnWidth(3,120);
 
     int row = 0;
-    std::vector<Id> sids = reg.allSpecialtyIds();
-    for (size_t i = 0; i < sids.size(); ++i) {
-        const Id id = sids[i];
+    auto sids = reg.allSpecialtyIds();
+    for (auto id : sids) {
         const Specialty* sp = reg.getSpecialty(id);
         if (!sp) continue;
 
-        for (size_t j = 0; j < sp->subjects_.size(); ++j) {
-            const SpecSubject& s = sp->subjects_[j];
+        for (const auto& s : sp->subjects_) {
             ui->tblSubjects->insertRow(row);
             ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(sp->name_)));
             ui->tblSubjects->setItem(row,1,new QTableWidgetItem(QString::fromStdString(s.name)));
             const QString ctl = (s.control == ControlType::Zachet) ? "Зачёт" : "Экзамен";
             ui->tblSubjects->setItem(row,2,new QTableWidgetItem(ctl));
 
-            QPushButton* btn = makeDeleteButton("Удалить",this,[this,id,s]{
-                Specialty* spm = reg.getSpecialtyMutable(id);
-                if (spm) {
+            auto* btn = makeDeleteButton("Удалить",this,[this,id,s]{
+                if (auto* spm = reg.getSpecialtyMutable(id); spm) {
                     try { SpecialtyService::removeSubject(*spm,s.name); }
                     catch (const ISDException& e){ QMessageBox::warning(this,"Ошибка",e.what()); }
                 }
@@ -611,15 +602,15 @@ void ISD_QT2::refreshSubjects()
 
 void ISD_QT2::onAddSubjectToSpecialty()
 {
-    std::vector<Id> sids = reg.allSpecialtyIds();
+    auto sids = reg.allSpecialtyIds();
     if (sids.empty()) {
         QMessageBox::information(this,"Специальности","Нет специальностей.");
         return;
     }
 
     QStringList specNames;
-    for (size_t i = 0; i < sids.size(); ++i) {
-        const Specialty* sp = reg.getSpecialty(sids[i]);
+    for (auto sid : sids) {
+        const Specialty* sp = reg.getSpecialty(sid);
         specNames << QString::fromStdString(sp->name_);
     }
 
@@ -636,8 +627,8 @@ void ISD_QT2::onAddSubjectToSpecialty()
 
     const std::vector<ClassType> types = {ClassType::LK, ClassType::PZ, ClassType::LR};
 
-    for (size_t i = 0; i < sids.size(); ++i) {
-        Specialty* sp = reg.getSpecialtyMutable(sids[i]);
+    for (auto sid : sids) {
+        Specialty* sp = reg.getSpecialtyMutable(sid);
         if (sp && sp->name_ == spname.toStdString()) {
             try {
                 SpecialtyService::addSubject(*sp,SpecSubject{subj.toStdString(), ct, types});

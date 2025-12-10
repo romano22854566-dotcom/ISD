@@ -2,10 +2,10 @@
 #include <string>
 #include <memory>
 
-namespace isd {
+namespace isd{
 
 class Person {
-protected:
+private:
     std::string name_;
     int age_{0};
 public:

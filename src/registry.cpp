@@ -8,9 +8,12 @@
 
 #include <fstream>
 #include <sstream>
+#include <string>
+
 
 namespace isd{
 
+// Escaping helpers stay with std::string to avoid string_view conversions
 static std::string esc(const std::string& s){
     std::string o;
     for (char c : s){
@@ -29,7 +32,7 @@ static std::string unesc(const std::string& s){
     return o;
 }
 static std::vector<std::string> split(const std::string& l,char sep){
-    std::vector<std::string>v; std::string cur; bool e = false;
+    std::vector<std::string> v; std::string cur; bool e = false;
     for (char c : l){
         if (e){ cur.push_back(c); e = false; }
         else if (c == '\\') e = true;
@@ -54,111 +57,122 @@ static ClassType tagToClassType(const std::string& t){
     return ClassType::LR;
 }
 
+// Lowered complexity: write helpers
+
+static void writeStudent(std::ostream& f,const Student& s) {
+    std::ostringstream oss;
+    oss << esc(StudentService::fullName(s)) << ";"
+        << StudentService::age(s) << ";"
+        << esc(StudentService::group(s));
+
+    for (const auto& [subj,rec] : StudentService::records(s)) {
+        oss << ";" << esc(subj);
+        for (ClassType ct : {ClassType::LK,ClassType::PZ,ClassType::LR}) {
+            oss << "|" << classTypeToTag(ct) << ":";
+            const auto& vals = SubjectRecordService::gradesAt(rec,ct).vals_;
+            for (size_t i = 0; i < vals.size(); ++i) {
+                oss << vals[i];
+                if (i + 1 < vals.size()) oss << ",";
+            }
+        }
+        oss << ";!" << esc(subj);
+        for (ClassType ct : {ClassType::LK,ClassType::PZ,ClassType::LR}) {
+            oss << "|" << classTypeToTag(ct) << ":"
+                << SubjectRecordService::absenceAt(rec,ct);
+        }
+    }
+    f << oss.str() << "\n";
+}
+
+static void writeTeacher(std::ostream& f,const Teacher& t) {
+    std::ostringstream oss;
+    oss << esc(TeacherService::fullName(t)) << ";"
+        << TeacherService::age(t);
+    for (const auto& [group,subjects] : t.groupSubjects_) {
+        oss << ";" << esc(group) << "|";
+        for (size_t i = 0; i < subjects.size(); ++i) {
+            oss << esc(subjects[i].name);
+            if (i + 1 < subjects.size()) oss << ",";
+        }
+    }
+    f << oss.str() << "\n";
+}
+
+static void writeGroup(std::ostream& f,const Group& g) {
+    std::ostringstream oss;
+    oss << std::string(GroupService::name(g)) << ";"
+        << std::string(GroupService::specialty(g));
+    f << oss.str() << "\n";
+}
+
+static void writeSpecialty(std::ostream& f,const Specialty& sp) {
+    std::ostringstream oss;
+    oss << esc(SpecialtyService::name(sp));
+    for (const auto& s : sp.subjects_) {
+        const char ctl = (s.control == ControlType::Zachet) ? 'Z' : 'E';
+        oss << ";" << esc(s.name) << "|" << ctl << "|";
+        for (size_t i = 0; i < s.classTypes.size(); ++i) {
+            oss << classTypeToTag(s.classTypes[i]);
+            if (i + 1 < s.classTypes.size()) oss << ",";
+        }
+    }
+    f << oss.str() << "\n";
+}
+
 void Registry::save() const {
     {
         std::ofstream f(sf_);
         if (!f) throw ISDException("Не удалось открыть файл студентов для записи");
-        for (auto& kv : students_) {
-            const auto& s = kv.second;
-            std::ostringstream oss;
-            oss << esc(StudentService::fullName(s)) << ";"
-                << StudentService::age(s) << ";"
-                << esc(StudentService::group(s));
-
-            for (auto& recKv : StudentService::records(s)) {
-                const auto& subj = recKv.first;
-                const auto& rec = recKv.second;
-
-               
-                oss << ";" << esc(subj);
-                for (ClassType ct : {ClassType::LK,ClassType::PZ,ClassType::LR}) {
-                    oss << "|" << classTypeToTag(ct) << ":";
-                    const auto& vals = SubjectRecordService::gradesAt(rec,ct).vals_;
-                    for (size_t i = 0; i < vals.size(); ++i) {
-                        oss << vals[i];
-                        if (i + 1 < vals.size()) oss << ",";
-                    }
-                }
-              
-                oss << ";!" << esc(subj);
-                for (ClassType ct : {ClassType::LK,ClassType::PZ,ClassType::LR}) {
-                    oss << "|" << classTypeToTag(ct) << ":"
-                        << SubjectRecordService::absenceAt(rec,ct);
-                }
-            }
-            f << oss.str() << "\n";
+        for (const auto& [_,s] : students_) {
+            writeStudent(f,s);
         }
     }
 
     {
         std::ofstream f(tf_);
         if (!f) throw ISDException("Не удалось открыть файл преподавателей для записи");
-        for (auto& kv : teachers_) {
-            const auto& t = kv.second;
-            std::ostringstream oss;
-            oss << esc(TeacherService::fullName(t)) << ";"
-                << TeacherService::age(t);
-            for (auto& gr : t.groupSubjects_) {
-                oss << ";" << esc(gr.first) << "|";
-                for (size_t i = 0; i < gr.second.size(); ++i) {
-                    oss << esc(gr.second[i].name);
-                    if (i + 1 < gr.second.size()) oss << ",";
-                }
-            }
-            f << oss.str() << "\n";
+        for (const auto& [_,t] : teachers_) {
+            writeTeacher(f,t);
         }
     }
 
     {
         std::ofstream f(gf_);
         if (!f) throw ISDException("Не удалось открыть файл групп для записи");
-        for (auto& kv : groups_) {
-            const auto& g = kv.second;
-            std::ostringstream oss;
-            oss << esc(GroupService::name(g)) << ";"
-                << esc(GroupService::specialty(g));
-            f << oss.str() << "\n";
+        for (const auto& [_,g] : groups_) {
+            writeGroup(f,g);
         }
     }
 
     {
         std::ofstream f(specf_);
         if (!f) throw ISDException("Не удалось открыть файл специальностей для записи");
-        for (auto& kv : specialties_) {
-            const auto& sp = kv.second;
-            std::ostringstream oss;
-            oss << esc(SpecialtyService::name(sp));
-            for (auto& s : sp.subjects_) {
-                char ctl = (s.control == ControlType::Zachet) ? 'Z' : 'E';
-                oss << ";" << esc(s.name) << "|" << ctl << "|";
-                for (size_t i = 0; i < s.classTypes.size(); ++i) {
-                    oss << classTypeToTag(s.classTypes[i]);
-                    if (i + 1 < s.classTypes.size()) oss << ",";
-                }
-            }
-            f << oss.str() << "\n";
+        for (const auto& [_,sp] : specialties_) {
+            writeSpecialty(f,sp);
         }
     }
 }
+
 void Registry::load() {
     students_.clear(); teachers_.clear(); groups_.clear(); specialties_.clear();
     nextS_ = nextT_ = nextG_ = nextSpec_ = 1;
 
+    // Load specialties
     {
         std::ifstream f(specf_);
         std::string line;
         while (std::getline(f,line)) {
             if (line.empty()) continue;
-            auto parts = split(line,';');
+            const auto parts = split(line,';');
             Specialty sp(unesc(parts[0]));
             for (size_t i = 1; i < parts.size(); ++i) {
-                auto kv = split(parts[i],'|');
+                const auto kv = split(parts[i],'|');
                 if (kv.size() != 3) continue;
-                std::string subj = unesc(kv[0]);
-                ControlType ct = (kv[1] == "E") ? ControlType::Exam : ControlType::Zachet;
+                const std::string subj = unesc(kv[0]);
+                const ControlType ct = (kv[1] == "E") ? ControlType::Exam : ControlType::Zachet;
                 std::vector<ClassType> types;
-                auto tparts = split(kv[2],',');
-                for (auto& tp : tparts) {
+                const auto tparts = split(kv[2],',');
+                for (const auto& tp : tparts) {
                     types.push_back(tagToClassType(tp));
                 }
                 if (!types.empty()) {
@@ -169,88 +183,92 @@ void Registry::load() {
         }
     }
 
+    // Load groups
     {
         std::ifstream f(gf_);
         std::string line;
         while (std::getline(f,line)) {
             if (line.empty()) continue;
-            auto parts = split(line,';');
+            const auto parts = split(line,';');
             Group g(unesc(parts[0]));
             if (parts.size() >= 2) GroupService::setSpecialty(g,unesc(parts[1]));
             addGroup(g);
         }
     }
 
+    // Load students
     {
         std::ifstream f(sf_);
         std::string line;
         while (std::getline(f,line)) {
             if (line.empty()) continue;
-            auto parts = split(line,';');
+            const auto parts = split(line,';');
             if (parts.size() < 3) continue;
+
             Student s(unesc(parts[0]),std::stoi(parts[1]),unesc(parts[2]));
-            Group* g = findGroup(StudentService::group(s));
+
+            const Group* g = findGroup(StudentService::group(s));
             if (g && !GroupService::specialty(*g).empty()) {
                 const Specialty* sp = findSpecialty(GroupService::specialty(*g));
                 if (sp) StudentService::ensureSubjectsFromSpecialty(s,*sp);
             }
-            size_t i = 3;
-            while (i < parts.size()) {
-                if (parts[i].empty()){ ++i; continue; }
+
+            for (size_t i = 3; i < parts.size(); ++i) {
+                if (parts[i].empty()) continue;
+
                 if (parts[i][0] == '!') {
-                    auto blk = parts[i].substr(1);
-                    auto kv = split(blk,'|');
+                    const auto blk = parts[i].substr(1);
+                    const auto kv = split(blk,'|');
                     if (!kv.empty()) {
-                        std::string subj = unesc(kv[0]);
+                        const std::string subj = unesc(kv[0]);
                         for (size_t k = 1; k < kv.size(); ++k) {
-                            auto ct_pair = split(kv[k],':');
+                            const auto ct_pair = split(kv[k],':');
                             if (ct_pair.size() != 2) continue;
-                            ClassType ct = tagToClassType(ct_pair[0]);
-                            int hrs = ct_pair[1].empty() ? 0 : std::stoi(ct_pair[1]);
+                            const ClassType ct = tagToClassType(ct_pair[0]);
+                            const int hrs = ct_pair[1].empty() ? 0 : std::stoi(ct_pair[1]);
                             StudentService::setAbsence(s,subj,ct,hrs);
                         }
                     }
-                    ++i;
                 }
                 else {
-                    auto kv = split(parts[i],'|');
+                    const auto kv = split(parts[i],'|');
                     if (!kv.empty()) {
-                        std::string subj = unesc(kv[0]);
+                        const std::string subj = unesc(kv[0]);
                         for (size_t k = 1; k < kv.size(); ++k) {
-                            auto ct_pair = split(kv[k],':');
+                            const auto ct_pair = split(kv[k],':');
                             if (ct_pair.size() != 2) continue;
-                            ClassType ct = tagToClassType(ct_pair[0]);
-                            auto nums = split(ct_pair[1],',');
+                            const ClassType ct = tagToClassType(ct_pair[0]);
+                            const auto nums = split(ct_pair[1],',');
                             StudentService::clearGrades(s,subj,ct);
-                            for (auto& n : nums) {
+                            for (const auto& n : nums) {
                                 if (!n.empty()) StudentService::addGrade(s,subj,ct,std::stoi(n));
                             }
                         }
                     }
-                    ++i;
                 }
             }
             addStudent(s);
         }
     }
 
+    // Load teachers
     {
         std::ifstream f(tf_);
         std::string line;
         while (std::getline(f,line)) {
             if (line.empty()) continue;
-            auto parts = split(line,';');
+            const auto parts = split(line,';');
             if (parts.size() < 2) continue;
 
             Teacher t(unesc(parts[0]),std::stoi(parts[1]));
             TeacherService::validate(t);
 
             for (size_t i = 2; i < parts.size(); ++i) {
-                auto kv = split(parts[i],'|');
+                const auto kv = split(parts[i],'|');
                 if (kv.size() != 2) continue;
-                std::string gname = unesc(kv[0]);
-                auto subs = split(kv[1],',');
-                for (auto& s : subs) {
+                const std::string gname = unesc(kv[0]);
+                const auto subs = split(kv[1],',');
+                for (const auto& s : subs) {
                     if (!s.empty()) {
                         TeacherService::addSubject(t,gname,Subject{unesc(s)});
                     }
@@ -260,4 +278,5 @@ void Registry::load() {
         }
     }
 }
-}
+
+} // namespace isd

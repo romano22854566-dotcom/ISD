@@ -24,29 +24,30 @@ TeacherDialog::~TeacherDialog() {
 }
 
 void TeacherDialog::loadData() {
-    auto t = reg.getTeacher(teacherId);
+    const Teacher* t = reg.getTeacher(teacherId);
     if (!t) return;
     ui->tblSubjects->setRowCount(0);
     ui->tblSubjects->setColumnCount(2);
     ui->tblSubjects->setHorizontalHeaderLabels({"Группа","Предмет"});
+
     int row = 0;
-    for (auto& kv : t->groupSubjects_) {
-        for (auto& subj : kv.second) {
+    for (const auto& [group,subjects] : t->groupSubjects_) {
+        for (const auto& subj : subjects) {
             ui->tblSubjects->insertRow(row);
-            ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(kv.first)));
+            ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(group)));
             ui->tblSubjects->setItem(row,1,new QTableWidgetItem(QString::fromStdString(subj.name)));
-            row++;
+            ++row;
         }
     }
 }
 
 void TeacherDialog::onAddSubject() {
-    auto t = reg.getTeacherMutable(teacherId);
+    Teacher* t = reg.getTeacherMutable(teacherId);
     if (!t) return;
     bool ok;
-    QString group = QInputDialog::getText(this,"Группа","Введите название группы:",QLineEdit::Normal,"",&ok);
+    const QString group = QInputDialog::getText(this,"Группа","Введите название группы:",QLineEdit::Normal,"",&ok);
     if (!ok || group.isEmpty()) return;
-    QString subj = QInputDialog::getText(this,"Предмет","Введите название предмета:",QLineEdit::Normal,"",&ok);
+    const QString subj = QInputDialog::getText(this,"Предмет","Введите название предмета:",QLineEdit::Normal,"",&ok);
     if (!ok || subj.isEmpty()) return;
     try {
         TeacherService::addSubject(*t,group.toStdString(),Subject{subj.toStdString()});
@@ -58,12 +59,12 @@ void TeacherDialog::onAddSubject() {
 }
 
 void TeacherDialog::onRemoveSubject() {
-    auto t = reg.getTeacherMutable(teacherId);
+    Teacher* t = reg.getTeacherMutable(teacherId);
     if (!t) return;
-    int row = ui->tblSubjects->currentRow();
+    const int row = ui->tblSubjects->currentRow();
     if (row < 0) return;
-    QString group = ui->tblSubjects->item(row,0)->text();
-    QString subj = ui->tblSubjects->item(row,1)->text();
+    const QString group = ui->tblSubjects->item(row,0)->text();
+    const QString subj = ui->tblSubjects->item(row,1)->text();
     TeacherService::removeSubject(*t,group.toStdString(),subj.toStdString());
     loadData();
 }
