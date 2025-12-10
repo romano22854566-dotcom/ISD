@@ -52,7 +52,7 @@ static std::string classTypeToTag(ClassType ct){
     return "LK";
 }
 
-static ClassType tagToClassType(const std::string& t){
+static ClassType tagToClassType(std::string_view t){
     using enum ClassType;
     if (t == "LK") return LK;
     if (t == "PZ") return PZ;
@@ -60,6 +60,19 @@ static ClassType tagToClassType(const std::string& t){
 }
 
 
+static void writeGrades(std::ostringstream& oss,const SubjectRecord& rec) {
+    using enum ClassType;
+    for (ClassType ct : {LK,PZ,LR}) {
+        oss << "|" << classTypeToTag(ct) << ":";
+        const auto& vals = SubjectRecordService::gradesAt(rec,ct).vals_;
+        bool first = true;
+        for (int v : vals) {
+            if (!first) oss << ",";
+            oss << v;
+            first = false;
+        }
+    }
+}
 // Lowered complexity: write helpers
 
 static void writeStudent(std::ostream& f,const Student& s) {
@@ -69,17 +82,11 @@ static void writeStudent(std::ostream& f,const Student& s) {
         << esc(StudentService::group(s));
 
     for (const auto& [subj,rec] : StudentService::records(s)) {
-        using enum ClassType;
         oss << ";" << esc(subj);
-        for (ClassType ct : {LK,PZ,LR}) {
-            oss << "|" << classTypeToTag(ct) << ":";
-            const auto& vals = SubjectRecordService::gradesAt(rec,ct).vals_;
-            for (size_t i = 0; i < vals.size(); ++i) {
-                oss << vals[i];
-                if (i + 1 < vals.size()) oss << ",";
-            }
-        }
+        writeGrades(oss,rec);   // используем helper вместо вложенного цикла
+
         oss << ";!" << esc(subj);
+        using enum ClassType;
         for (ClassType ct : {LK,PZ,LR}) {
             oss << "|" << classTypeToTag(ct) << ":"
                 << SubjectRecordService::absenceAt(rec,ct);
@@ -87,6 +94,7 @@ static void writeStudent(std::ostream& f,const Student& s) {
     }
     f << oss.str() << "\n";
 }
+
 
 static void writeTeacher(std::ostream& f,const Teacher& t) {
     std::ostringstream oss;
@@ -290,3 +298,4 @@ void Registry::loadTeachers() {
     }
 }
 }
+
