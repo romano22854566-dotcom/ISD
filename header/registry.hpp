@@ -44,7 +44,7 @@ public:
         SpecialtyService::validate(sp);
         Id id = nextSpec_;
         ++nextSpec_;
-        specialties_.emplace(id,sp);
+        specialties_.try_emplace(id,sp);
         return id;
     }
     bool removeSpecialty(Id id) { return specialties_.erase(id) > 0; }
@@ -67,7 +67,7 @@ public:
         StudentService::validate(s);
         Id id = nextS_;
         ++nextS_;
-        students_.emplace(id,s);
+        students_.try_emplace(id,s);
         return id;
     }
     bool removeStudent(Id id) { return students_.erase(id) > 0; }
@@ -91,7 +91,7 @@ public:
         TeacherService::validate(t);
         Id id = nextT_;
         ++nextT_;
-        teachers_.emplace(id,t);
+        teachers_.try_emplace(id,t);
         return id;
     }
     bool removeTeacher(Id id) { return teachers_.erase(id) > 0; }
@@ -108,7 +108,7 @@ public:
         GroupService::validate(g);
         Id id = nextG_;
         ++nextG_;
-        groups_.emplace(id,g);
+        groups_.try_emplace(id,g);
         return id;
     }
     bool removeGroup(Id id) { return groups_.erase(id) > 0; }
@@ -140,6 +140,12 @@ public:
     Registry(): Registry("students.txt","teachers.txt","groups.txt","specialties.txt") {}
     void save() const;
     void load();
+private:
+    void loadSpecialties();
+    void loadGroups();
+    void loadStudents();
+    void loadTeachers();
 };
 
 }
+

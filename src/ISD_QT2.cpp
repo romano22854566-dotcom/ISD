@@ -43,11 +43,12 @@ void setSectionModes(QTableWidget* tbl,const std::vector<QHeaderView::ResizeMode
     }
 }
 
-QPushButton* makeDeleteButton(const QString& text,const QObject* receiver,std::function<void()> onClick) {
+QPushButton* makeDeleteButton(const QString& text,QObject* receiver,std::function<void()> onClick) {
     auto* btn = new QPushButton(text);
-    QObject::connect(btn,&QPushButton::clicked,const_cast<QObject*>(receiver),std::move(onClick));
+    QObject::connect(btn,&QPushButton::clicked,receiver,std::move(onClick));
     return btn;
 }
+
 
 void filterByText(QTableWidget* tbl,int col,const QString& query) {
     for (int i = 0; i < tbl->rowCount(); ++i) {
@@ -205,10 +206,11 @@ void ISD_QT2::exportStudentReport(int sid) {
         double sum = 0.0; int cnt = 0; int abs = 0;
 
         for (const auto& [_,gr] : rec.grades) {
-            for (size_t i = 0; i < gr.vals_.size(); ++i) {
-                sum += gr.vals_[i];
+            for (int v : gr.vals_) {
+                sum += v;
                 ++cnt;
             }
+
         }
         for (const auto& [_,a] : rec.absences) {
             abs += a;
