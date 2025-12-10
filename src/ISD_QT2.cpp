@@ -43,13 +43,11 @@ void setSectionModes(QTableWidget* tbl,const std::vector<QHeaderView::ResizeMode
     }
 }
 
-static QObject* asReceiver(const QObject* obj) {
-    return const_cast<QObject*>(obj);
-}
-
 QPushButton* makeDeleteButton(const QString& text,const QObject* receiver,std::function<void()> onClick) {
     auto* btn = new QPushButton(text);
-    QObject::connect(btn,&QPushButton::clicked,asReceiver(receiver),std::move(onClick));
+    QObject::connect(btn,&QPushButton::clicked,
+                     const_cast<QObject*>(receiver), 
+                     std::move(onClick));
     return btn;
 }
 
