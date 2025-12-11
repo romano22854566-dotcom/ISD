@@ -26,7 +26,6 @@
 using namespace isd;
 
 namespace{
-// Общие утилиты
 
 void setupTable(QTableWidget* tbl,int cols,const QStringList& headers) {
     tbl->clear();
@@ -59,7 +58,7 @@ void filterByText(QTableWidget* tbl,int col,const QString& query) {
     }
 }
 
-} // namespace
+} 
 
 ISD_QT2::ISD_QT2(QWidget* parent)
     : QMainWindow(parent)
@@ -118,23 +117,19 @@ ISD_QT2::ISD_QT2(QWidget* parent)
     try { reg.load(); }
     catch (const ISDException&){ QMessageBox::warning(this,"Ошибка","Не удалось загрузить данные, начаты новые файлы."); }
 
-    // Студенты
     connect(ui->tblStudents,&QTableWidget::cellDoubleClicked,this,&ISD_QT2::onStudentDoubleClicked);
     connect(ui->btnAddStudent,&QPushButton::clicked,this,&ISD_QT2::onAddStudent);
     connect(ui->btnSearchStudent,&QPushButton::clicked,this,&ISD_QT2::onSearchStudent);
     connect(ui->btnImportCSV,&QPushButton::clicked,this,&ISD_QT2::onImportCSV);
 
-    // Группы
     connect(ui->tblGroups,&QTableWidget::cellDoubleClicked,this,&ISD_QT2::onGroupDoubleClicked);
     connect(ui->btnAddGroup,&QPushButton::clicked,this,&ISD_QT2::onAddGroup);
     connect(ui->btnSearchGroup,&QPushButton::clicked,this,&ISD_QT2::onSearchGroup);
 
-    // Преподаватели
     connect(ui->tblTeachers,&QTableWidget::cellDoubleClicked,this,&ISD_QT2::onTeacherDoubleClicked);
     connect(ui->btnAddTeacher,&QPushButton::clicked,this,&ISD_QT2::onAddTeacher);
     connect(ui->btnSearchTeacher,&QPushButton::clicked,this,&ISD_QT2::onSearchTeacher);
 
-    // Специальности / Предметы
     connect(ui->btnAddSpecialty,&QPushButton::clicked,this,&ISD_QT2::onAddSpecialty);
     connect(ui->btnAddSubjectToSpec,&QPushButton::clicked,this,&ISD_QT2::onAddSubjectToSpecialty);
 
@@ -274,7 +269,6 @@ void ISD_QT2::refreshStudents()
         ui->tblStudents->setItem(row,1,new QTableWidgetItem(QString::number(s->age_)));
         ui->tblStudents->setItem(row,2,new QTableWidgetItem(QString::fromStdString(s->groupName_)));
 
-        // Редактирование
         auto* btnEdit = new QPushButton("Редакт.");
         connect(btnEdit,&QPushButton::clicked,this,[this,row]{
             const int sid = studentRowToId(row);
@@ -285,7 +279,6 @@ void ISD_QT2::refreshStudents()
         });
         ui->tblStudents->setCellWidget(row,3,btnEdit);
 
-        // Справка
         auto* btnRep = new QPushButton("Справка");
         connect(btnRep,&QPushButton::clicked,this,[this,row]{
             const int sid = studentRowToId(row);
@@ -294,7 +287,6 @@ void ISD_QT2::refreshStudents()
         });
         ui->tblStudents->setCellWidget(row,4,btnRep);
 
-        // Удаление
         auto* btnDel = makeDeleteButton("Удалить",this,[this,row]{
             const int sid = studentRowToId(row);
             if (sid) { reg.removeStudent((Id)sid); refreshStudents(); }

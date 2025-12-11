@@ -19,48 +19,37 @@ protected:
     void closeEvent(QCloseEvent* event) override;
 
 private slots:
-    // === Студенты ===
-    void refreshStudents();                 // Обновление таблицы студентов
-    void onAddStudent();                    // Добавление студента
-    void onSearchStudent();                 // Поиск по ФИО
-    void onImportCSV();                     // Импорт студентов из CSV
-    void onStudentDoubleClicked(int row,int column); // Двойной клик по студенту
-
-    // === Группы ===
-    void refreshGroups();                   // Обновление таблицы групп
-    void onAddGroup();                      // Добавление группы
-    void onSearchGroup();                   // Поиск по номеру группы
-    void onGroupDoubleClicked(int row,int column); // Двойной клик по группе
-
-    // === Преподаватели ===
-    void refreshTeachers();                 // Обновление таблицы преподавателей
-    void onAddTeacher();                    // Добавление преподавателя
-    void onSearchTeacher();                 // Поиск по ФИО
-    void onTeacherDoubleClicked(int row,int column); // Двойной клик по преподавателю
-
-    // === Специальности ===
-    void refreshSpecialties();              // Обновление таблицы специальностей
-    void onAddSpecialty();                  // Добавление специальности
-
-    // === Предметы ===
-    void refreshSubjects();                 // Обновление таблицы предметов
-    void onAddSubjectToSpecialty();         // Добавление предмета в специальность
+ 
+    void refreshStudents();                 
+    void onAddStudent();                   
+    void onSearchStudent();                
+    void onImportCSV();                    
+    void onStudentDoubleClicked(int row,int column); 
+    void refreshGroups();                  
+    void onAddGroup();                    
+    void onSearchGroup();                  
+    void onGroupDoubleClicked(int row,int column); 
+    void refreshTeachers();                 
+    void onAddTeacher();                  
+    void onSearchTeacher();                 
+    void onTeacherDoubleClicked(int row,int column); 
+    void refreshSpecialties();              
+    void onAddSpecialty();                  
+    void refreshSubjects();                 
+    void onAddSubjectToSpecialty();         
 
 private:
     Ui::ISD_QT2* ui;
     isd::Registry reg;
 
-    // === Вспомогательные методы ===
-    void exportStudentReport(int sid);      // Экспорт справки по студенту
-    void refreshAllAfterSpecChange();       // Комплексное обновление после изменений специальностей/предметов
+    void exportStudentReport(int sid);      
+    void refreshAllAfterSpecChange();       
 
-    // === Преобразование из индекс строки в ID ===
     int studentRowToId(int row) const;
     int groupRowToId(int row) const;
     int teacherRowToId(int row) const;
     int specialtyRowToId(int row) const;
 
-    // === Ограничения для ввода ===
     static constexpr int MIN_STUDENT_AGE = 14;
     static constexpr int MAX_STUDENT_AGE = 120;
     static constexpr int DEFAULT_STUDENT_AGE = 18;

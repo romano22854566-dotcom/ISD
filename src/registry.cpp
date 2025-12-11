@@ -13,7 +13,6 @@
 
 namespace isd{
 
-// Escaping helpers stay with std::string to avoid string_view conversions
 static std::string esc(const std::string& s){
     std::string o;
     for (char c : s){
@@ -73,7 +72,6 @@ static void writeGrades(std::ostringstream& oss,const SubjectRecord& rec) {
         }
     }
 }
-// Lowered complexity: write helpers
 
 static void writeStudent(std::ostream& f,const Student& s) {
     std::ostringstream oss;
@@ -83,7 +81,7 @@ static void writeStudent(std::ostream& f,const Student& s) {
 
     for (const auto& [subj,rec] : StudentService::records(s)) {
         oss << ";" << esc(subj);
-        writeGrades(oss,rec);   // используем helper вместо вложенного цикла
+        writeGrades(oss,rec);   
 
         oss << ";!" << esc(subj);
         using enum ClassType;
@@ -94,7 +92,6 @@ static void writeStudent(std::ostream& f,const Student& s) {
     }
     f << oss.str() << "\n";
 }
-
 
 static void writeTeacher(std::ostream& f,const Teacher& t) {
     std::ostringstream oss;
