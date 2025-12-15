@@ -19,4 +19,6 @@ private:
     isd::Registry& reg;
     int teacherId;
     void loadData();
+    void insertSubjectRow(int row,const std::string& group,const std::string& subjName);
+    void disableSubjectTableEditing();
 };

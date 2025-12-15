@@ -23,6 +23,25 @@ TeacherDialog::~TeacherDialog() {
     delete ui;
 }
 
+void TeacherDialog::insertSubjectRow(int row,const std::string& group,const std::string& subjName)
+{
+    ui->tblSubjects->insertRow(row);
+    ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(group)));
+    ui->tblSubjects->setItem(row,1,new QTableWidgetItem(QString::fromStdString(subjName)));
+}
+
+void TeacherDialog::disableSubjectTableEditing()
+{
+    for (int row = 0; row < ui->tblSubjects->rowCount(); ++row) {
+        for (int col = 0; col < 2; ++col) {
+            QTableWidgetItem* item = ui->tblSubjects->item(row,col);
+            if (item) {
+                item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+            }
+        }
+    }
+}
+
 void TeacherDialog::loadData() {
     const Teacher* t = reg.getTeacher(teacherId);
     if (!t) return;
@@ -33,21 +52,13 @@ void TeacherDialog::loadData() {
     int row = 0;
     for (const auto& [group,subjects] : t->groupSubjects) {
         for (const auto& subj : subjects) {
-            ui->tblSubjects->insertRow(row);
-            ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(group)));
-            ui->tblSubjects->setItem(row,1,new QTableWidgetItem(QString::fromStdString(subj.name)));
+            insertSubjectRow(row,group,subj.name); 
             ++row;
-            for (int row = 0; row < ui->tblSubjects->rowCount(); ++row) {
-                for (int col = 0; col < 2; ++col) { 
-                    QTableWidgetItem* item = ui->tblSubjects->item(row,col);
-                    if (item) {
-                        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-                    }
-                }
-            }
         }
     }
+    disableSubjectTableEditing();
 }
+
 void TeacherDialog::onAddSubject() {
     Teacher* t = reg.getTeacherMutable(teacherId);
     if (!t) return;

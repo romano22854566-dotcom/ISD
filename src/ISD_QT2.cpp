@@ -518,16 +518,45 @@ void ISD_QT2::onTeacherDoubleClicked(int row,int)
     refreshTeachers();
 }
 
+void ISD_QT2::saveSpecialtyName(Id id,int row)
+{
+    const int sid = specialtyRowToId(row);
+    if (!sid) return;
+
+    Specialty* sp = reg.getSpecialtyMutable(id);
+    if (!sp) return;
+
+    QTableWidgetItem* item = ui->tblSpecialties->item(row,0);
+    QString newName = item->text().trimmed();
+
+    if (newName.isEmpty()) {
+        QMessageBox::warning(this,"Ошибка","Название специальности не может быть пустым");
+        return;
+    }
+    try {
+        std::vector<SpecSubject> savedSubjects = sp->subjects;
+        reg.removeSpecialty(id);
+        Specialty newSpecialty(newName.toStdString());
+        newSpecialty.subjects = savedSubjects;
+        reg.addSpecialty(newSpecialty);
+        refreshAllAfterSpecChange();
+    }
+    catch (const ISDException& e) {
+        QMessageBox::warning(this,"Ошибка",e.what());
+        refreshSpecialties();
+    }
+}
+
 void ISD_QT2::refreshSpecialties()
 {
-    setupTable(ui->tblSpecialties,3,{"Название специальности", "", ""});
+    setupTable(ui->tblSpecialties,3,{"Специальность","Сохранить","Удалить"});
     setSectionModes(ui->tblSpecialties,{
         QHeaderView::Stretch,
         QHeaderView::ResizeToContents,
         QHeaderView::ResizeToContents
     });
-    ui->tblSpecialties->setColumnWidth(1,100);
-    ui->tblSpecialties->setColumnWidth(2,100);
+    ui->tblSpecialties->setColumnWidth(1,120);
+    ui->tblSpecialties->setColumnWidth(2,120);
 
     auto ids = reg.allSpecialtyIds();
     ui->tblSpecialties->setRowCount((int)ids.size());
@@ -535,45 +564,21 @@ void ISD_QT2::refreshSpecialties()
     for (int row = 0; row < (int)ids.size(); ++row) {
         const Id id = ids[row];
         const Specialty* sp = reg.getSpecialty(id);
+
         QTableWidgetItem* nameItem = new QTableWidgetItem(QString::fromStdString(sp->name));
         nameItem->setFlags(nameItem->flags() | Qt::ItemIsEditable);
         ui->tblSpecialties->setItem(row,0,nameItem);
-        auto* btnSave = new QPushButton("Сохранить");
+        auto* btnSave = new QPushButton("Сохранить"); 
         connect(btnSave,&QPushButton::clicked,this,[this,row,id]{
-            const int sid = specialtyRowToId(row);
-            if (!sid) return;
-
-            Specialty* sp = reg.getSpecialtyMutable(id);
-            if (!sp) return;
-
-            QTableWidgetItem* item = ui->tblSpecialties->item(row,0);
-            QString newName = item->text().trimmed();
-
-            if (newName.isEmpty()) {
-                QMessageBox::warning(this,"Ошибка", "Название специальности не может быть пустым");
-                return;
-            }
-            try {
-                
-                std::vector<SpecSubject> savedSubjects = sp->subjects;
-                reg.removeSpecialty(id);
-                Specialty newSpecialty(newName.toStdString());
-                newSpecialty.subjects = savedSubjects;
-                reg.addSpecialty(newSpecialty);
-                refreshAllAfterSpecChange();
-            }
-            catch (const ISDException& e) {
-                QMessageBox::warning(this,"Ошибка",e.what());
-                refreshSpecialties();
-            }
+            saveSpecialtyName(id,row); 
         });
         ui->tblSpecialties->setCellWidget(row,1,btnSave);
-
-        auto* btn = makeDeleteButton("Удалить",this,[this,id]{
+        auto* btn = makeDeleteButton("Удалить",this,[this,id]{ 
             reg.removeSpecialty(id);
-            refreshAllAfterSpecChange();
+            refreshSpecialties();
+            refreshStudents();
         });
-        ui->tblSpecialties->setCellWidget(row,2,btn);
+        ui->tblSpecialties->setCellWidget(row,2,btn); 
     }
 }
 
@@ -590,6 +595,39 @@ void ISD_QT2::onAddSpecialty()
         QMessageBox::warning(this,"Ошибка",e.what());
     }
 }
+
+void ISD_QT2::addSubjectRowToTable(int& row,isd::Id specialtyId,const isd::Specialty* sp,const isd::SpecSubject& s)
+{
+    ui->tblSubjects->insertRow(row);
+    ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(sp->name)));
+    ui->tblSubjects->setItem(row,1,new QTableWidgetItem(QString::fromStdString(s.name)));
+    const QString ctl = (s.control == ControlType::Zachet) ? "Зачёт" : "Экзамен";
+    ui->tblSubjects->setItem(row,2,new QTableWidgetItem(ctl));
+
+    auto* btn = makeDeleteButton("Удалить",this,[this,specialtyId,s]{
+        if (auto* spm = reg.getSpecialtyMutable(specialtyId); spm) {
+            try { SpecialtyService::removeSubject(*spm,s.name); }
+            catch (const ISDException& e){ QMessageBox::warning(this,"Ошибка",e.what()); }
+        }
+        refreshSubjects();
+        refreshStudents();
+    });
+    ui->tblSubjects->setCellWidget(row,3,btn);
+    ++row;
+}
+
+void ISD_QT2::disableSubjectTableEditing()
+{
+    for (int row = 0; row < ui->tblSubjects->rowCount(); ++row) {
+        for (int col = 0; col < 3; ++col) {
+            QTableWidgetItem* item = ui->tblSubjects->item(row,col);
+            if (item) {
+                item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+            }
+        }
+    }
+}
+
 
 void ISD_QT2::refreshSubjects()
 {
@@ -609,32 +647,11 @@ void ISD_QT2::refreshSubjects()
         if (!sp) continue;
 
         for (const auto& s : sp->subjects) {
-            ui->tblSubjects->insertRow(row);
-            ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(sp->name)));
-            ui->tblSubjects->setItem(row,1,new QTableWidgetItem(QString::fromStdString(s.name)));
-            const QString ctl = (s.control == ControlType::Zachet) ? "Зачёт" : "Экзамен";
-            ui->tblSubjects->setItem(row,2,new QTableWidgetItem(ctl));
-
-            auto* btn = makeDeleteButton("Удалить",this,[this,id,s]{
-                if (auto* spm = reg.getSpecialtyMutable(id); spm) {
-                    try { SpecialtyService::removeSubject(*spm,s.name); }
-                    catch (const ISDException& e){ QMessageBox::warning(this,"Ошибка",e.what()); }
-                }
-                refreshSubjects();
-                refreshStudents();
-            });
-            ui->tblSubjects->setCellWidget(row,3,btn);
-            ++row;
-            for (int row = 0; row < ui->tblSubjects->rowCount(); ++row) {
-                for (int col = 0; col < 3; ++col) { 
-                    QTableWidgetItem* item = ui->tblSubjects->item(row,col);
-                    if (item) {
-                        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-                    }
-                }
-            }
+            addSubjectRowToTable(row,id,sp,s);
         }
     }
+
+    disableSubjectTableEditing();
 }
 void ISD_QT2::onAddSubjectToSpecialty()
 {

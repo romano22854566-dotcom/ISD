@@ -49,7 +49,9 @@ private:
     int groupRowToId(int row) const;
     int teacherRowToId(int row) const;
     int specialtyRowToId(int row) const;
-
+    void saveSpecialtyName(isd::Id specialtyId,int row); 
+    void addSubjectRowToTable(int& row,isd::Id specialtyId,const isd::Specialty* sp,const isd::SpecSubject& s); 
+    void disableSubjectTableEditing(); 
     static constexpr int MIN_STUDENT_AGE = 14;
     static constexpr int MAX_STUDENT_AGE = 120;
     static constexpr int DEFAULT_STUDENT_AGE = 18;
