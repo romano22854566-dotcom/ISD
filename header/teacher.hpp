@@ -10,7 +10,7 @@ namespace isd{
 
 class Teacher: public Person {
 public:
-    std::map<std::string,std::vector<Subject>,std::less<>> groupSubjects_;
+    std::map<std::string,std::vector<Subject>,std::less<>> groupSubjects;
 
     Teacher() = default;
     Teacher(std::string n,int a): Person(std::move(n),a) {}

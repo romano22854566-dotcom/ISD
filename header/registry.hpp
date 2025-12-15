@@ -17,122 +17,122 @@ namespace isd{
 using Id = size_t;
 
 class Registry {
-    std::map<Id,Student> students_;
-    std::map<Id,Teacher> teachers_;
-    std::map<Id,Group> groups_;
-    std::map<Id,Specialty> specialties_;
+    std::map<Id,Student> students;
+    std::map<Id,Teacher> teachers;
+    std::map<Id,Group> groups;
+    std::map<Id,Specialty> specialties;
 
-    Id nextS_{1};
-    Id nextT_{1};
-    Id nextG_{1};
-    Id nextSpec_{1};
+    Id nextS{1};
+    Id nextT{1};
+    Id nextG{1};
+    Id nextSpec{1};
 
-    std::string sf_;
-    std::string tf_;
-    std::string gf_;
-    std::string specf_;
+    std::string sf;
+    std::string tf;
+    std::string gf;
+    std::string specf;
 
 public:
     Registry(std::string s,std::string t,std::string g,std::string spec = "specialties.txt")
-        : sf_(std::move(s)),
-        tf_(std::move(t)),
-        gf_(std::move(g)),
-        specf_(std::move(spec)) {
+        : sf(std::move(s)),
+        tf(std::move(t)),
+        gf(std::move(g)),
+        specf(std::move(spec)) {
     }
 
     Id addSpecialty(const Specialty& sp) {
         SpecialtyService::validate(sp);
-        Id id = nextSpec_;
-        ++nextSpec_;
-        specialties_.try_emplace(id,sp);
+        Id id = nextSpec;
+        ++nextSpec;
+        specialties.try_emplace(id,sp);
         return id;
     }
-    bool removeSpecialty(Id id) { return specialties_.erase(id) > 0; }
-    Specialty* getSpecialtyMutable(Id id) { return &specialties_.at(id); }
-    const Specialty* getSpecialty(Id id) const { return &specialties_.at(id); }
+    bool removeSpecialty(Id id) { return specialties.erase(id) > 0; }
+    Specialty* getSpecialtyMutable(Id id) { return &specialties.at(id); }
+    const Specialty* getSpecialty(Id id) const { return &specialties.at(id); }
     std::vector<Id> allSpecialtyIds() const {
         std::vector<Id> v;
-        v.reserve(specialties_.size());
-        for (auto const& [sid,_] : specialties_) v.push_back(sid);
+        v.reserve(specialties.size());
+        for (auto const& [sid,_] : specialties) v.push_back(sid);
         return v;
     }
     const Specialty* findSpecialty(std::string_view name) const {
-        for (auto const& [_,sp] : specialties_) {
-            if (sp.name_ == name) return &sp;
+        for (auto const& [_,sp] : specialties) {
+            if (sp.name == name) return &sp;
         }
         return nullptr;
     }
 
     Id addStudent(const Student& s) {
         StudentService::validate(s);
-        Id id = nextS_;
-        ++nextS_;
-        students_.try_emplace(id,s);
+        Id id = nextS;
+        ++nextS;
+        students.try_emplace(id,s);
         return id;
     }
-    bool removeStudent(Id id) { return students_.erase(id) > 0; }
-    Student* getStudentMutable(Id id) { return &students_.at(id); }
-    const Student* getStudent(Id id) const { return &students_.at(id); }
+    bool removeStudent(Id id) { return students.erase(id) > 0; }
+    Student* getStudentMutable(Id id) { return &students.at(id); }
+    const Student* getStudent(Id id) const { return &students.at(id); }
     std::vector<Id> allStudentIds() const {
         std::vector<Id> v;
-        v.reserve(students_.size());
-        for (auto const& [sid,_] : students_) v.push_back(sid);
+        v.reserve(students.size());
+        for (auto const& [sid,_] : students) v.push_back(sid);
         return v;
     }
     std::vector<Id> findStudentsByGroup(std::string_view g) const {
         std::vector<Id> res;
-        for (auto const& [sid,st] : students_) {
-            if (st.groupName_ == g) res.push_back(sid);
+        for (auto const& [sid,st] : students) {
+            if (st.groupName == g) res.push_back(sid);
         }
         return res;
     }
 
     Id addTeacher(const Teacher& t) {
         TeacherService::validate(t);
-        Id id = nextT_;
-        ++nextT_;
-        teachers_.try_emplace(id,t);
+        Id id = nextT;
+        ++nextT;
+        teachers.try_emplace(id,t);
         return id;
     }
-    bool removeTeacher(Id id) { return teachers_.erase(id) > 0; }
-    Teacher* getTeacherMutable(Id id) { return &teachers_.at(id); }
-    const Teacher* getTeacher(Id id) const { return &teachers_.at(id); }
+    bool removeTeacher(Id id) { return teachers.erase(id) > 0; }
+    Teacher* getTeacherMutable(Id id) { return &teachers.at(id); }
+    const Teacher* getTeacher(Id id) const { return &teachers.at(id); }
     std::vector<Id> allTeacherIds() const {
         std::vector<Id> v;
-        v.reserve(teachers_.size());
-        for (auto const& [tid,_] : teachers_) v.push_back(tid);
+        v.reserve(teachers.size());
+        for (auto const& [tid,_] : teachers) v.push_back(tid);
         return v;
     }
 
     Id addGroup(const Group& g) {
         GroupService::validate(g);
-        Id id = nextG_;
-        ++nextG_;
-        groups_.try_emplace(id,g);
+        Id id = nextG;
+        ++nextG;
+        groups.try_emplace(id,g);
         return id;
     }
-    bool removeGroup(Id id) { return groups_.erase(id) > 0; }
-    Group* getGroupMutable(Id id) { return &groups_.at(id); }
-    const Group* getGroup(Id id) const { return &groups_.at(id); }
+    bool removeGroup(Id id) { return groups.erase(id) > 0; }
+    Group* getGroupMutable(Id id) { return &groups.at(id); }
+    const Group* getGroup(Id id) const { return &groups.at(id); }
     std::vector<Id> allGroupIds() const {
         std::vector<Id> v;
-        v.reserve(groups_.size());
-        for (auto const& [gid,_] : groups_) v.push_back(gid);
+        v.reserve(groups.size());
+        for (auto const& [gid,_] : groups) v.push_back(gid);
         return v;
     }
     Group* findGroup(std::string_view name) {
-        for (auto& [_,g] : groups_) {
-            if (g.name_ == name) return &g;
+        for (auto& [_,g] : groups) {
+            if (g.name == name) return &g;
         }
         return nullptr;
     }
 
     void syncGroupFromSpecialty(const Group& g) {
-        if (g.specialtyName_.empty()) return;
-        const Specialty* sp = findSpecialty(g.specialtyName_);
+        if (g.specialtyName.empty()) return;
+        const Specialty* sp = findSpecialty(g.specialtyName);
         if (!sp) return;
-        for (auto& [_,st] : students_) {
-            if (st.groupName_ == g.name_) {
+        for (auto& [_,st] : students) {
+            if (st.groupName == g.name) {
                 StudentService::ensureSubjectsFromSpecialty(st,*sp);
             }
         }

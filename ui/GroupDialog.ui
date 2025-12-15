@@ -11,40 +11,55 @@
 			</rect>
 		</property>
 		<property name="windowTitle">
-			<string>Редактор группы / специальностей</string>
+			<string>Просмотр предметов специальности</string>
 		</property>
 		<layout class="QVBoxLayout" name="verticalLayout">
 			<item>
-				<!-- Таблица без явных колонок, они задаются в коде -->
-				<widget class="QTableWidget" name="tblSubjects"/>
+				<widget class="QLabel" name="lblSpecialtyName">
+					<property name="text">
+						<string>Специальность: </string>
+					</property>
+					<property name="font">
+						<font>
+							<pointsize>12</pointsize>
+							<weight>75</weight>
+							<bold>true</bold>
+						</font>
+					</property>
+					<property name="alignment">
+						<set>Qt::AlignCenter</set>
+					</property>
+				</widget>
 			</item>
 			<item>
-				<layout class="QHBoxLayout" name="horizontalLayout">
-					<item>
-						<widget class="QPushButton" name="btnAddSubject">
-							<property name="text">
-								<string>Добавить</string>
-							</property>
-						</widget>
-					</item>
-					<item>
-						<widget class="QPushButton" name="btnRemoveSubject">
-							<property name="text">
-								<string>Удалить</string>
-							</property>
-						</widget>
-					</item>
-					<item>
-						<widget class="QPushButton" name="btnAddSpecSubject">
-							<property name="text">
-								<string>Добавить предмет в специальность</string>
-							</property>
-						</widget>
-					</item>
-				</layout>
+				<widget class="QTableWidget" name="tblSubjects">
+					<property name="editTriggers">
+						<set>QAbstractItemView::NoEditTriggers</set>
+					</property>
+					<property name="selectionBehavior">
+						<enum>QAbstractItemView::SelectRows</enum>
+					</property>
+				</widget>
+			</item>
+			<item>
+				<widget class="QDialogButtonBox" name="buttonBox">
+					<property name="orientation">
+						<enum>Qt::Horizontal</enum>
+					</property>
+					<property name="standardButtons">
+						<set>QDialogButtonBox::Ok</set>
+					</property>
+				</widget>
 			</item>
 		</layout>
 	</widget>
 	<resources/>
-	<connections/>
+	<connections>
+		<connection>
+			<sender>buttonBox</sender>
+			<signal>accepted()</signal>
+			<receiver>GroupDialog</receiver>
+			<slot>accept()</slot>
+		</connection>
+	</connections>
 </ui>

@@ -21,11 +21,11 @@ struct SpecSubject {
 
 class Specialty {
 public:
-    std::string name_;
-    std::vector<SpecSubject> subjects_;
+    std::string name;
+    std::vector<SpecSubject> subjects;
 
     Specialty() = default;
-    explicit Specialty(std::string n): name_(std::move(n)) {}
+    explicit Specialty(std::string n): name(std::move(n)) {}
     ~Specialty() = default;
 };
 

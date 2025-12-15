@@ -170,8 +170,8 @@ void ISD_QT2::exportStudentReport(int sid) {
     if (!s) return;
 
     QString specialty = "Не указана";
-    if (const Group* g = reg.findGroup(s->groupName_); g && !g->specialtyName_.empty()) {
-        specialty = QString::fromStdString(g->specialtyName_);
+    if (const Group* g = reg.findGroup(s->groupName); g && !g->specialtyName.empty()) {
+        specialty = QString::fromStdString(g->specialtyName);
     }
 
     const QString fileName = QFileDialog::getSaveFileName(this,"Сохранить справку",".","Text Files (*.txt)");
@@ -182,9 +182,9 @@ void ISD_QT2::exportStudentReport(int sid) {
     QTextStream out(&f);
 
     out << "СПРАВКА ОБ УСПЕВАЕМОСТИ СТУДЕНТА\n\n";
-    out << "ФИО: " << QString::fromStdString(s->name_) << "\n";
-    out << "Возраст: " << QString::number(s->age_) << "\n";
-    out << "Группа: " << QString::fromStdString(s->groupName_) << "\n";
+    out << "ФИО: " << QString::fromStdString(s->name) << "\n";
+    out << "Возраст: " << QString::number(s->age) << "\n";
+    out << "Группа: " << QString::fromStdString(s->groupName) << "\n";
     out << "Специальность: " << specialty << "\n\n";
 
     out << "+----+-------------------------+--------------+------------------+\n";
@@ -197,12 +197,12 @@ void ISD_QT2::exportStudentReport(int sid) {
 
     int index = 1; double totalAvg = 0.0; int subjCount = 0; int totalAbs = 0;
 
-    const auto& recs = s->records_;
+    const auto& recs = s->records;
     for (const auto& [subj,rec] : recs) {
         double sum = 0.0; int cnt = 0; int abs = 0;
 
         for (const auto& [_,gr] : rec.grades) {
-            for (int v : gr.vals_) {
+            for (int v : gr.vals) {
                 sum += v;
                 ++cnt;
             }
@@ -265,9 +265,9 @@ void ISD_QT2::refreshStudents()
     for (int row = 0; row < (int)ids.size(); ++row) {
         const Id id = ids[row];
         const Student* s = reg.getStudent(id);
-        ui->tblStudents->setItem(row,0,new QTableWidgetItem(QString::fromStdString(s->name_)));
-        ui->tblStudents->setItem(row,1,new QTableWidgetItem(QString::number(s->age_)));
-        ui->tblStudents->setItem(row,2,new QTableWidgetItem(QString::fromStdString(s->groupName_)));
+        ui->tblStudents->setItem(row,0,new QTableWidgetItem(QString::fromStdString(s->name)));
+        ui->tblStudents->setItem(row,1,new QTableWidgetItem(QString::number(s->age)));
+        ui->tblStudents->setItem(row,2,new QTableWidgetItem(QString::fromStdString(s->groupName)));
 
         auto* btnEdit = new QPushButton("Редакт.");
         connect(btnEdit,&QPushButton::clicked,this,[this,row]{
@@ -310,7 +310,7 @@ void ISD_QT2::onAddStudent()
     QStringList groupNames;
     for (auto gid : gids) {
         const Group* g = reg.getGroup(gid);
-        groupNames << QString::fromStdString(g->name_);
+        groupNames << QString::fromStdString(g->name);
     }
 
     bool ok = false;
@@ -319,8 +319,8 @@ void ISD_QT2::onAddStudent()
 
     try {
         Student s(name.toStdString(),age,gname.toStdString());
-        if (const Group* g = reg.findGroup(gname.toStdString()); g && !g->specialtyName_.empty()) {
-            const Specialty* sp = reg.findSpecialty(g->specialtyName_);
+        if (const Group* g = reg.findGroup(gname.toStdString()); g && !g->specialtyName.empty()) {
+            const Specialty* sp = reg.findSpecialty(g->specialtyName);
             if (sp) StudentService::ensureSubjectsFromSpecialty(s,*sp);
         }
         reg.addStudent(s);
@@ -359,8 +359,8 @@ void ISD_QT2::onImportCSV()
         if (name.isEmpty() || group.isEmpty()) continue;
         try {
             Student s(name.toStdString(),age,group.toStdString());
-            if (const Group* gr = reg.findGroup(group.toStdString()); gr && !gr->specialtyName_.empty()){
-                const Specialty* sp = reg.findSpecialty(gr->specialtyName_);
+            if (const Group* gr = reg.findGroup(group.toStdString()); gr && !gr->specialtyName.empty()){
+                const Specialty* sp = reg.findSpecialty(gr->specialtyName);
                 if (sp) StudentService::ensureSubjectsFromSpecialty(s,*sp);
             }
             reg.addStudent(s);
@@ -399,8 +399,8 @@ void ISD_QT2::refreshGroups()
     for (int row = 0; row < (int)ids.size(); ++row) {
         const Id id = ids[row];
         const Group* g = reg.getGroup(id);
-        ui->tblGroups->setItem(row,0,new QTableWidgetItem(QString::fromStdString(g->name_)));
-        ui->tblGroups->setItem(row,1,new QTableWidgetItem(QString::fromStdString(g->specialtyName_)));
+        ui->tblGroups->setItem(row,0,new QTableWidgetItem(QString::fromStdString(g->name)));
+        ui->tblGroups->setItem(row,1,new QTableWidgetItem(QString::fromStdString(g->specialtyName)));
 
         auto* btn = makeDeleteButton("Удалить",this,[this,row]{
             const int gid = groupRowToId(row);
@@ -427,7 +427,7 @@ void ISD_QT2::onAddGroup()
     QStringList specNames;
     for (auto sid : sids) {
         const Specialty* sp = reg.getSpecialty(sid);
-        specNames << QString::fromStdString(sp->name_);
+        specNames << QString::fromStdString(sp->name);
     }
 
     bool ok = false;
@@ -520,12 +520,14 @@ void ISD_QT2::onTeacherDoubleClicked(int row,int)
 
 void ISD_QT2::refreshSpecialties()
 {
-    setupTable(ui->tblSpecialties,2,{"Название специальности",""});
+    setupTable(ui->tblSpecialties,3,{"Название специальности", "", ""});
     setSectionModes(ui->tblSpecialties,{
         QHeaderView::Stretch,
+        QHeaderView::ResizeToContents,
         QHeaderView::ResizeToContents
     });
     ui->tblSpecialties->setColumnWidth(1,100);
+    ui->tblSpecialties->setColumnWidth(2,100);
 
     auto ids = reg.allSpecialtyIds();
     ui->tblSpecialties->setRowCount((int)ids.size());
@@ -533,13 +535,45 @@ void ISD_QT2::refreshSpecialties()
     for (int row = 0; row < (int)ids.size(); ++row) {
         const Id id = ids[row];
         const Specialty* sp = reg.getSpecialty(id);
-        ui->tblSpecialties->setItem(row,0,new QTableWidgetItem(QString::fromStdString(sp->name_)));
+        QTableWidgetItem* nameItem = new QTableWidgetItem(QString::fromStdString(sp->name));
+        nameItem->setFlags(nameItem->flags() | Qt::ItemIsEditable);
+        ui->tblSpecialties->setItem(row,0,nameItem);
+        auto* btnSave = new QPushButton("Сохранить");
+        connect(btnSave,&QPushButton::clicked,this,[this,row,id]{
+            const int sid = specialtyRowToId(row);
+            if (!sid) return;
+
+            Specialty* sp = reg.getSpecialtyMutable(id);
+            if (!sp) return;
+
+            QTableWidgetItem* item = ui->tblSpecialties->item(row,0);
+            QString newName = item->text().trimmed();
+
+            if (newName.isEmpty()) {
+                QMessageBox::warning(this,"Ошибка", "Название специальности не может быть пустым");
+                return;
+            }
+            try {
+                
+                std::vector<SpecSubject> savedSubjects = sp->subjects;
+                reg.removeSpecialty(id);
+                Specialty newSpecialty(newName.toStdString());
+                newSpecialty.subjects = savedSubjects;
+                reg.addSpecialty(newSpecialty);
+                refreshAllAfterSpecChange();
+            }
+            catch (const ISDException& e) {
+                QMessageBox::warning(this,"Ошибка",e.what());
+                refreshSpecialties();
+            }
+        });
+        ui->tblSpecialties->setCellWidget(row,1,btnSave);
 
         auto* btn = makeDeleteButton("Удалить",this,[this,id]{
             reg.removeSpecialty(id);
             refreshAllAfterSpecChange();
         });
-        ui->tblSpecialties->setCellWidget(row,1,btn);
+        ui->tblSpecialties->setCellWidget(row,2,btn);
     }
 }
 
@@ -574,9 +608,9 @@ void ISD_QT2::refreshSubjects()
         const Specialty* sp = reg.getSpecialty(id);
         if (!sp) continue;
 
-        for (const auto& s : sp->subjects_) {
+        for (const auto& s : sp->subjects) {
             ui->tblSubjects->insertRow(row);
-            ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(sp->name_)));
+            ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(sp->name)));
             ui->tblSubjects->setItem(row,1,new QTableWidgetItem(QString::fromStdString(s.name)));
             const QString ctl = (s.control == ControlType::Zachet) ? "Зачёт" : "Экзамен";
             ui->tblSubjects->setItem(row,2,new QTableWidgetItem(ctl));
@@ -591,10 +625,17 @@ void ISD_QT2::refreshSubjects()
             });
             ui->tblSubjects->setCellWidget(row,3,btn);
             ++row;
+            for (int row = 0; row < ui->tblSubjects->rowCount(); ++row) {
+                for (int col = 0; col < 3; ++col) { 
+                    QTableWidgetItem* item = ui->tblSubjects->item(row,col);
+                    if (item) {
+                        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+                    }
+                }
+            }
         }
     }
 }
-
 void ISD_QT2::onAddSubjectToSpecialty()
 {
     auto sids = reg.allSpecialtyIds();
@@ -606,7 +647,7 @@ void ISD_QT2::onAddSubjectToSpecialty()
     QStringList specNames;
     for (auto sid : sids) {
         const Specialty* sp = reg.getSpecialty(sid);
-        specNames << QString::fromStdString(sp->name_);
+        specNames << QString::fromStdString(sp->name);
     }
 
     bool ok = false;
@@ -624,7 +665,7 @@ void ISD_QT2::onAddSubjectToSpecialty()
 
     for (auto sid : sids) {
         Specialty* sp = reg.getSpecialtyMutable(sid);
-        if (sp && sp->name_ == spname.toStdString()) {
+        if (sp && sp->name == spname.toStdString()) {
             try {
                 SpecialtyService::addSubject(*sp,SpecSubject{subj.toStdString(), ct, types});
             }

@@ -42,14 +42,13 @@ void StudentDialog::loadData() {
         "Пропуски (ЛК)","Пропуски (ПЗ)","Пропуски (ЛР)",
         "Средний балл","Всего пропусков"
     });
-
     const auto& recs = StudentService::records(*s);
     int row = 0;
 
     auto fillRow = [&](int r,const SubjectRecord& rec) {
-        ui->tblSubjects->setItem(r,1,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::LK).vals_)));
-        ui->tblSubjects->setItem(r,2,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::PZ).vals_)));
-        ui->tblSubjects->setItem(r,3,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::LR).vals_)));
+        ui->tblSubjects->setItem(r,1,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::LK).vals)));
+        ui->tblSubjects->setItem(r,2,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::PZ).vals)));
+        ui->tblSubjects->setItem(r,3,new QTableWidgetItem(joinGrades(SubjectRecordService::gradesAt(rec,ClassType::LR).vals)));
         ui->tblSubjects->setItem(r,4,new QTableWidgetItem(QString::number(SubjectRecordService::absenceAt(rec,ClassType::LK))));
         ui->tblSubjects->setItem(r,5,new QTableWidgetItem(QString::number(SubjectRecordService::absenceAt(rec,ClassType::PZ))));
         ui->tblSubjects->setItem(r,6,new QTableWidgetItem(QString::number(SubjectRecordService::absenceAt(rec,ClassType::LR))));
@@ -57,7 +56,7 @@ void StudentDialog::loadData() {
         double sum = 0.0; int cnt = 0; int abs = 0;
 
         for (const auto& [_,gr] : rec.grades) {
-            for (int v : gr.vals_) { sum += v; ++cnt; }
+            for (int v : gr.vals) { sum += v; ++cnt; }
         }
         for (const auto& [_,a] : rec.absences) { abs += a; }
 
@@ -66,7 +65,7 @@ void StudentDialog::loadData() {
         ui->tblSubjects->setItem(r,8,new QTableWidgetItem(QString::number(abs)));
     };
 
-    for (const auto& specSubj : sp->subjects_) {
+    for (const auto& specSubj : sp->subjects) {
         ui->tblSubjects->insertRow(row);
         ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(specSubj.name)));
 
@@ -85,9 +84,14 @@ void StudentDialog::loadData() {
             ui->tblSubjects->setItem(row,8,new QTableWidgetItem("0"));
         }
         ++row;
+        for (int row = 0; row < ui->tblSubjects->rowCount(); ++row) {
+            QTableWidgetItem* item = ui->tblSubjects->item(row,0);
+            if (item) {
+                item->setFlags(item->flags() & ~Qt::ItemIsEditable); 
+            }
+        }
     }
 }
-
 void StudentDialog::onSave() {
     Student* s = reg.getStudentMutable(studentId);
     if (!s) { accept(); return; }

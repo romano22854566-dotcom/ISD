@@ -16,14 +16,14 @@ public:
     }
 
     static void addSubject(Teacher& t,const std::string& group,const Subject& s) {
-        auto& vec = t.groupSubjects_[group];
+        auto& vec = t.groupSubjects[group];
         if (std::find(vec.begin(),vec.end(),s) != vec.end())
             throw ISDException("Предмет уже добавлен");
         vec.push_back(s);
     }
 
     static void removeSubject(Teacher& t,const std::string& group,const std::string& subjName) {
-        auto& vec = t.groupSubjects_[group];
+        auto& vec = t.groupSubjects[group];
         std::erase_if(vec,[&subjName](const Subject& s){ return s.name == subjName; });
 
 

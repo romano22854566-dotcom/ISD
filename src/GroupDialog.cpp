@@ -9,17 +9,6 @@ GroupDialog::GroupDialog(isd::Registry& r,int id,QWidget* parent)
 {
     ui->setupUi(this);
     loadData();
-
-    if (groupId >= 0) {
-        connect(ui->btnAddSubject,&QPushButton::clicked,this,&GroupDialog::onAddSubject);
-        connect(ui->btnRemoveSubject,&QPushButton::clicked,this,&GroupDialog::onRemoveSubject);
-        ui->btnAddSpecSubject->setEnabled(false);
-    }
-    else {
-        connect(ui->btnAddSubject,&QPushButton::clicked,this,&GroupDialog::onAddSpecialty);
-        connect(ui->btnRemoveSubject,&QPushButton::clicked,this,&GroupDialog::onRemoveSpecItem);
-        connect(ui->btnAddSpecSubject,&QPushButton::clicked,this,&GroupDialog::onAddSpecSubject);
-    }
 }
 
 GroupDialog::~GroupDialog() {
@@ -34,21 +23,35 @@ void GroupDialog::loadData() {
 void GroupDialog::loadGroupView() {
     auto g = reg.getGroup(groupId);
     if (!g) return;
+    this->setWindowTitle(QString("Группа %1").arg(QString::fromStdString(g->name)));
+    const auto* sp = reg.findSpecialty(g->specialtyName);
+    QString specName = sp ? QString::fromStdString(g->specialtyName) : "Нет специальности";
+    if (ui->lblSpecialtyName) {
+        ui->lblSpecialtyName->setText("Специальность: " + specName);
+    }
+    ui->tblSubjects->clear();
     ui->tblSubjects->setRowCount(0);
-    ui->tblSubjects->setColumnCount(2);
-    ui->tblSubjects->setHorizontalHeaderLabels({"Специальность","Предметы (просмотр)"});
+    ui->tblSubjects->setColumnCount(1);
+    ui->tblSubjects->setHorizontalHeaderLabels({"Предметы"});
+    ui->tblSubjects->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
-    const auto* sp = reg.findSpecialty(g->specialtyName_);
-    ui->tblSubjects->insertRow(0);
-    ui->tblSubjects->setItem(0,0,new QTableWidgetItem(QString::fromStdString(g->specialtyName_)));
-    QString subjList;
     if (sp) {
-        for (size_t i = 0; i < sp->subjects_.size(); ++i){
-            subjList += QString::fromStdString(sp->subjects_[i].name);
-            if (i + 1 < sp->subjects_.size()) subjList += ", ";
+        for (const auto& subject : sp->subjects) {
+            int row = ui->tblSubjects->rowCount();
+            ui->tblSubjects->insertRow(row);
+
+            auto* item = new QTableWidgetItem(QString::fromStdString(subject.name));
+            item->setFlags(item->flags() ^ Qt::ItemIsEditable); 
+            item->setTextAlignment(Qt::AlignCenter); 
+
+            ui->tblSubjects->setItem(row,0,item);
         }
     }
-    ui->tblSubjects->setItem(0,1,new QTableWidgetItem(subjList));
+    else {
+        int row = ui->tblSubjects->rowCount();
+        ui->tblSubjects->insertRow(row);
+        ui->tblSubjects->setItem(row,0,new QTableWidgetItem("Предметы не назначены"));
+    }
 }
 
 void GroupDialog::loadSpecialtyView() {
@@ -61,17 +64,17 @@ void GroupDialog::loadSpecialtyView() {
         const auto* sp = reg.getSpecialty(id);
         if (!sp) continue;
 
-        if (sp->subjects_.empty()) {
+        if (sp->subjects.empty()) {
             ui->tblSubjects->insertRow(row);
-            ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(sp->name_)));
+            ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(sp->name)));
             ui->tblSubjects->setItem(row,1,new QTableWidgetItem("-"));
             ui->tblSubjects->setItem(row,2,new QTableWidgetItem("-"));
             ++row;
         }
         else {
-            for (auto& s : sp->subjects_) {
+            for (auto& s : sp->subjects) {
                 ui->tblSubjects->insertRow(row);
-                ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(sp->name_)));
+                ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(sp->name)));
                 ui->tblSubjects->setItem(row,1,new QTableWidgetItem(QString::fromStdString(s.name)));
                 QString ctl = (s.control == isd::ControlType::Zachet) ? "Зачёт" : "Экзамен";
                 ui->tblSubjects->setItem(row,2,new QTableWidgetItem(ctl));
@@ -110,7 +113,7 @@ void GroupDialog::onAddSpecSubject() {
     }
 
     QStringList specNames;
-    for (auto id : sids) specNames << QString::fromStdString(reg.getSpecialty(id)->name_);
+    for (auto id : sids) specNames << QString::fromStdString(reg.getSpecialty(id)->name);
     bool ok = false;
     QString spname = QInputDialog::getItem(this,"Специальность","Выберите:",specNames,0,false,&ok);
     if (!ok || spname.isEmpty()) return;
@@ -126,7 +129,7 @@ void GroupDialog::onAddSpecSubject() {
 
     for (auto id : sids) {
         auto* sp = reg.getSpecialtyMutable(id);
-        if (sp && sp->name_ == spname.toStdString()) {
+        if (sp && sp->name == spname.toStdString()) {
             try {
                 isd::SpecialtyService::addSubject(*sp,isd::SpecSubject{subj.toStdString(), ct, types});
                 loadSpecialtyView();
@@ -148,7 +151,7 @@ void GroupDialog::onRemoveSpecItem() {
 
     for (auto id : reg.allSpecialtyIds()) {
         auto* sp = reg.getSpecialtyMutable(id);
-        if (!sp || QString::fromStdString(sp->name_) != spname) continue;
+        if (!sp || QString::fromStdString(sp->name) != spname) continue;
 
         if (subj == "-" || subj.isEmpty()) {
             reg.removeSpecialty(id);

@@ -38,7 +38,7 @@ void EditStudentDialog::onSave() {
 
         Student edited(newName,newAge,newGroup);
         StudentService::validate(edited);
-        edited.records_ = s->records_; 
+        edited.records = s->records; 
         *s = edited;
         accept();
     }

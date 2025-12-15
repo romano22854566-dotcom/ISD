@@ -21,7 +21,6 @@ private:
     Ui::GroupDialog* ui;
     isd::Registry& reg;
     int groupId;
-
     void loadData();
     void loadGroupView();
     void loadSpecialtyView();

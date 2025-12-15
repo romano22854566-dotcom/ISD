@@ -6,7 +6,7 @@ namespace isd{
 template<typename T>
 class Grade {
 public:
-    std::vector<T> vals_;
+    std::vector<T> vals;
     Grade() = default;
     ~Grade() = default;
 };

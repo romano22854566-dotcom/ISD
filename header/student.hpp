@@ -17,14 +17,14 @@ struct SubjectRecord {
 
 class Student {
 public:
-    std::string name_;
-    int age_{0};
-    std::string groupName_;
-    std::map<std::string,SubjectRecord,std::less<>> records_;
+    std::string name;
+    int age{0};
+    std::string groupName;
+    std::map<std::string,SubjectRecord,std::less<>> records;
 
     Student() = default;
     Student(std::string n,int a,std::string g)
-        : name_(std::move(n)),age_(a),groupName_(std::move(g)) {
+        : name(std::move(n)),age(a),groupName(std::move(g)) {
     }
     ~Student() = default;
 };

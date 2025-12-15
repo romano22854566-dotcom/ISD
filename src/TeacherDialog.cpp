@@ -31,24 +31,69 @@ void TeacherDialog::loadData() {
     ui->tblSubjects->setHorizontalHeaderLabels({"Группа","Предмет"});
 
     int row = 0;
-    for (const auto& [group,subjects] : t->groupSubjects_) {
+    for (const auto& [group,subjects] : t->groupSubjects) {
         for (const auto& subj : subjects) {
             ui->tblSubjects->insertRow(row);
             ui->tblSubjects->setItem(row,0,new QTableWidgetItem(QString::fromStdString(group)));
             ui->tblSubjects->setItem(row,1,new QTableWidgetItem(QString::fromStdString(subj.name)));
             ++row;
+            for (int row = 0; row < ui->tblSubjects->rowCount(); ++row) {
+                for (int col = 0; col < 2; ++col) { 
+                    QTableWidgetItem* item = ui->tblSubjects->item(row,col);
+                    if (item) {
+                        item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+                    }
+                }
+            }
         }
     }
 }
-
 void TeacherDialog::onAddSubject() {
     Teacher* t = reg.getTeacherMutable(teacherId);
     if (!t) return;
+
     bool ok;
-    const QString group = QInputDialog::getText(this,"Группа","Введите название группы:",QLineEdit::Normal,"",&ok);
+    QStringList existingGroups;
+    auto groupIds = reg.allGroupIds();
+    for (auto gid : groupIds) {
+        const Group* g = reg.getGroup(gid);
+        existingGroups << QString::fromStdString(g->name);
+    }
+
+    if (existingGroups.isEmpty()) {
+        QMessageBox::warning(this,"Ошибка","Нет доступных групп");
+        return;
+    }
+
+    QString group = QInputDialog::getItem(this,"Группа",
+                                         "Выберите группу:",
+                                         existingGroups,0,false,&ok);
     if (!ok || group.isEmpty()) return;
-    const QString subj = QInputDialog::getText(this,"Предмет","Введите название предмета:",QLineEdit::Normal,"",&ok);
+
+    const Group* selectedGroup = reg.findGroup(group.toStdString());
+    if (!selectedGroup || selectedGroup->specialtyName.empty()) {
+        QMessageBox::warning(this,"Ошибка",
+                           "У выбранной группы не указана специальность");
+        return;
+    }
+
+    const Specialty* sp = reg.findSpecialty(selectedGroup->specialtyName);
+    if (!sp || sp->subjects.empty()) {
+        QMessageBox::warning(this,"Ошибка",
+                           "У специальности нет предметов");
+        return;
+    }
+
+    QStringList availableSubjects;
+    for (const auto& subject : sp->subjects) {
+        availableSubjects << QString::fromStdString(subject.name);
+    }
+
+    QString subj = QInputDialog::getItem(this,"Предмет",
+                                        "Выберите предмет:",
+                                        availableSubjects,0,false,&ok);
     if (!ok || subj.isEmpty()) return;
+   
     try {
         TeacherService::addSubject(*t,group.toStdString(),Subject{subj.toStdString()});
         loadData();

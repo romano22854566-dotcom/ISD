@@ -63,7 +63,7 @@ static void writeGrades(std::ostringstream& oss,const SubjectRecord& rec) {
     using enum ClassType;
     for (ClassType ct : {LK,PZ,LR}) {
         oss << "|" << classTypeToTag(ct) << ":";
-        const auto& vals = SubjectRecordService::gradesAt(rec,ct).vals_;
+        const auto& vals = SubjectRecordService::gradesAt(rec,ct).vals;
         bool first = true;
         for (int v : vals) {
             if (!first) oss << ",";
@@ -97,7 +97,7 @@ static void writeTeacher(std::ostream& f,const Teacher& t) {
     std::ostringstream oss;
     oss << esc(TeacherService::fullName(t)) << ";"
         << TeacherService::age(t);
-    for (const auto& [group,subjects] : t.groupSubjects_) {
+    for (const auto& [group,subjects] : t.groupSubjects) {
         oss << ";" << esc(group) << "|";
         for (size_t i = 0; i < subjects.size(); ++i) {
             oss << esc(subjects[i].name);
@@ -117,7 +117,7 @@ static void writeGroup(std::ostream& f,const Group& g) {
 static void writeSpecialty(std::ostream& f,const Specialty& sp) {
     std::ostringstream oss;
     oss << esc(SpecialtyService::name(sp));
-    for (const auto& s : sp.subjects_) {
+    for (const auto& s : sp.subjects) {
         const char ctl = (s.control == ControlType::Zachet) ? 'Z' : 'E';
         oss << ";" << esc(s.name) << "|" << ctl << "|";
         for (size_t i = 0; i < s.classTypes.size(); ++i) {
@@ -130,41 +130,41 @@ static void writeSpecialty(std::ostream& f,const Specialty& sp) {
 
 void Registry::save() const {
     {
-        std::ofstream f(sf_);
+        std::ofstream f(sf);
         if (!f) throw ISDException("Не удалось открыть файл студентов для записи");
-        for (const auto& [_,s] : students_) {
+        for (const auto& [_,s] : students) {
             writeStudent(f,s);
         }
     }
 
     {
-        std::ofstream f(tf_);
+        std::ofstream f(tf);
         if (!f) throw ISDException("Не удалось открыть файл преподавателей для записи");
-        for (const auto& [_,t] : teachers_) {
+        for (const auto& [_,t] : teachers) {
             writeTeacher(f,t);
         }
     }
 
     {
-        std::ofstream f(gf_);
+        std::ofstream f(gf);
         if (!f) throw ISDException("Не удалось открыть файл групп для записи");
-        for (const auto& [_,g] : groups_) {
+        for (const auto& [_,g] : groups) {
             writeGroup(f,g);
         }
     }
 
     {
-        std::ofstream f(specf_);
+        std::ofstream f(specf);
         if (!f) throw ISDException("Не удалось открыть файл специальностей для записи");
-        for (const auto& [_,sp] : specialties_) {
+        for (const auto& [_,sp] : specialties) {
             writeSpecialty(f,sp);
         }
     }
 }
 
 void Registry::load() {
-    students_.clear(); teachers_.clear(); groups_.clear(); specialties_.clear();
-    nextS_ = nextT_ = nextG_ = nextSpec_ = 1;
+    students.clear(); teachers.clear(); groups.clear(); specialties.clear();
+    nextS = nextT = nextG = nextSpec = 1;
 
     loadSpecialties();
     loadGroups();
@@ -211,7 +211,7 @@ static void addSubjectsToTeacher(Teacher& t,const std::string& gname,const std::
 }
 
 void Registry::loadSpecialties() {
-    std::ifstream f(specf_);
+    std::ifstream f(specf);
     std::string line;
     while (std::getline(f,line)) {
         if (line.empty()) continue;
@@ -231,7 +231,7 @@ void Registry::loadSpecialties() {
     }
 }
 void Registry::loadGroups() {
-    std::ifstream f(gf_);
+    std::ifstream f(gf);
     std::string line;
     while (std::getline(f,line)) {
         if (line.empty()) continue;
@@ -246,7 +246,7 @@ void Registry::loadGroups() {
 
 
 void Registry::loadStudents() {
-    std::ifstream f(sf_);
+    std::ifstream f(sf);
     std::string line;
     while (std::getline(f,line)) {
         if (line.empty()) continue;
@@ -276,7 +276,7 @@ void Registry::loadStudents() {
 }
 
 void Registry::loadTeachers() {
-    std::ifstream f(tf_);
+    std::ifstream f(tf);
     std::string line;
     while (std::getline(f,line)) {
         if (line.empty()) continue;
